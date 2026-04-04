@@ -33,7 +33,7 @@ def main():
     search_client = AzureSearchClient()
 
     for query in TEST_QUERIES:
-        print(f"\n🔍 Query: {query}")
+        print(f"\nQuery: {query}")
         print("-" * 50)
 
         query_vector = openai_client.get_embedding(query)

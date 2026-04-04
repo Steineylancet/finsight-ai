@@ -28,7 +28,7 @@ limiter = Limiter(key_func=get_remote_address)
 # ── App ───────────────────────────────────────────────────────────────────────
 app = FastAPI(
     title="FinSight AI",
-    description="RAG-powered financial chatbot for Nexgen Corporation",
+    description="RAG-powered financial chatbot for Crestwood Capital Group",
     version="1.0.0",
 )
 
@@ -104,6 +104,8 @@ async def chat(request: Request, body: ChatRequest):
 
             # Stream GPT-4o response
             for chunk in stream:
+                if not chunk.choices:
+                    continue
                 delta = chunk.choices[0].delta
                 if delta and delta.content:
                     yield f"data: {json.dumps({'type': 'token', 'content': delta.content})}\n\n"

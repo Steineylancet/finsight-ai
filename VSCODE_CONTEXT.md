@@ -5,7 +5,7 @@
 
 ## What We Are Building
 
-A production-ready **RAG (Retrieval-Augmented Generation) Financial Chatbot** called **FinSight AI**, deployed end-to-end on Microsoft Azure. This chatbot answers natural language questions over a real custom-generated internal financial dataset for a fictional company called **Nexgen Corporation**.
+A production-ready **RAG (Retrieval-Augmented Generation) Financial Chatbot** called **FinSight AI**, deployed end-to-end on Microsoft Azure. This chatbot answers natural language questions over a real custom-generated internal financial dataset for a fictional company called **Crestwood Capital Group**.
 
 This is a resume project showcasing: Gen AI, RAG pattern, Azure cloud, FastAPI, Streamlit, CI/CD.
 
@@ -18,7 +18,7 @@ The dataset is located at:
 C:\Users\stein\OneDrive\Documents\DE\AI\Claude\Projects\fin_cb\
 ```
 
-It is a complete corporate financial dataset for **Nexgen Corporation** with the following files:
+It is a complete corporate financial dataset for **Crestwood Capital Group** with the following files:
 
 ### Fact Tables
 
@@ -35,7 +35,7 @@ It is a complete corporate financial dataset for **Nexgen Corporation** with the
 | File | Description |
 |------|-------------|
 | `master_data/dim_gl_account.csv` | Chart of accounts — GL codes, account names, categories (P&L / Balance Sheet) |
-| `master_data/dim_legal_entity.csv` | Legal entities (Nexgen Corporation USA = LE-US01, etc.) |
+| `master_data/dim_legal_entity.csv` | Legal entities (Crestwood Capital Group USA = LE-US01, etc.) |
 | `master_data/dim_responsibility_center.csv` | Cost centers with manager names, departments, BU mapping |
 | `master_data/dim_business_unit.csv` | Business unit hierarchy (Corporate, Regional, etc.) |
 | `master_data/dim_geography.csv` | Geography hierarchy — region, country, city |
@@ -65,7 +65,7 @@ Variance_BvA, Variance_BvA_Pct, Variance_BvF, Status
 - "Show me all People Costs transactions above $10,000 in January 2022"
 - "What is the total forecast for People Costs in Q2 2022?"
 - "Which vendors had the most spend in the Finance cost center?"
-- "What is Nexgen Corporation's total headcount cost for 2022?"
+- "What is Crestwood Capital Group's total headcount cost for 2022?"
 - "Which departments are at risk of going over budget?"
 - "Compare budget vs forecast for GL account 6100 (Salaries & Wages)"
 
@@ -174,7 +174,7 @@ Since the dataset is structured (CSVs, not documents), we convert rows into **hu
 ### Conversion approach for fact_gl_transactions:
 Each transaction becomes a sentence like:
 ```
-"In January 2022 (Q1), Nexgen Corporation USA (Finance department, cost center RC-0001)
+"In January 2022 (Q1), Crestwood Capital Group USA (Finance department, cost center RC-0001)
 posted a vendor invoice of $9,154.73 USD for Recruitment & Hiring expenses to GL account
 6106, from vendor Workday Inc. Status: Posted. Reference: REF-564705."
 ```
@@ -183,7 +183,7 @@ posted a vendor invoice of $9,154.73 USD for Recruitment & Hiring expenses to GL
 Each planning row becomes:
 ```
 "For GL account 6100 (Salaries & Wages, People Costs) in cost center RC-0001 (Finance),
-Nexgen Corporation USA had a budget of $36,136.05 and actuals of $36,866.15 in Period 1
+Crestwood Capital Group USA had a budget of $36,136.05 and actuals of $36,866.15 in Period 1
 of 2022 (Q1). Budget vs Actuals variance: +$730.10 (2.02% overspend). Status: At Risk."
 ```
 
@@ -206,7 +206,7 @@ User question (natural language)
     → Return top 5 most relevant financial chunks
         ↓
 [3] Build GPT-4o prompt:
-    System: "You are FinSight, a financial analyst assistant for Nexgen Corporation.
+    System: "You are FinSight, a financial analyst assistant for Crestwood Capital Group.
              Answer questions using only the provided financial data. Always cite sources."
     Context: [paste the 5 retrieved chunks]
     History: [last 5 conversation turns]
@@ -245,7 +245,7 @@ Always use: Free tier for Search, minimal token usage, cap max_tokens=800, batch
 ## Current Status
 - ✅ Azure free trial account created and CLI logged in
 - ✅ All Azure resources provisioned (OpenAI, AI Search, Blob Storage, App Service)
-- ✅ Custom financial dataset already generated (Nexgen Corporation, ~900K total rows)
+- ✅ Custom financial dataset already generated (Crestwood Capital Group, ~900K total rows)
 - ✅ Project plan finalized
 - ⏳ Next step: Create GitHub repo + build ingestion pipeline (scripts/ingest.py)
 
@@ -255,7 +255,7 @@ Always use: Free tier for Search, minimal token usage, cap max_tokens=800, batch
 ```
 FinSight AI — Financial RAG Chatbot (Azure)               [Live Demo] [GitHub]
 • Built an end-to-end RAG chatbot over 900K+ rows of internal financial data
-  (GL transactions, budgets, forecasts) for a fictional enterprise "Nexgen Corporation"
+  (GL transactions, budgets, forecasts) for a fictional enterprise "Crestwood Capital Group"
 • Implemented hybrid vector + keyword search using Azure AI Search with semantic reranking
 • Deployed FastAPI backend + Streamlit frontend to Azure App Service via GitHub Actions CI/CD
 • Tech: Python, FastAPI, Streamlit, LangChain, Azure OpenAI (GPT-4o),

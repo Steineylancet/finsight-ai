@@ -1,6 +1,6 @@
 """
 FinSight AI — Data Ingestion Pipeline
-Converts Nexgen Corporation financial CSVs into searchable RAG chunks
+Converts Crestwood Capital Group financial CSVs into searchable RAG chunks
 and indexes them into Azure AI Search.
 
 Run this script ONCE after setting up Azure resources:
@@ -84,7 +84,8 @@ def chunk_gl_transactions(df: pd.DataFrame, sample_size: int = 30000) -> list[di
     Sample GL transactions and convert to text chunks.
     We sample to stay within reasonable indexing size and cost.
     """
-    logger.info(f"GL transactions: {len(df)} rows. Sampling {sample_size}...")
+    df = df[df["Fiscal_Year"] >= 2023]
+    logger.info(f"GL transactions (FY2023+): {len(df)} rows. Sampling {sample_size}...")
     df_sample = df.sample(n=min(sample_size, len(df)), random_state=42)
 
     chunks = []
@@ -111,7 +112,8 @@ def chunk_planning_data(df: pd.DataFrame) -> list[dict]:
     Group planning rows by (RC_Code + Entity_ID + Fiscal_Year + Fiscal_Period + Expense_Category)
     and convert each group into a single text chunk.
     """
-    logger.info(f"Planning data: {len(df)} rows. Grouping into chunks...")
+    df = df[df["Fiscal_Year"] >= 2023]
+    logger.info(f"Planning data (FY2023+): {len(df)} rows. Grouping into chunks...")
     group_keys = ["RC_Code", "Entity_ID", "Fiscal_Year", "Fiscal_Period", "Expense_Category"]
     groups = df.groupby(group_keys)
 
@@ -159,8 +161,13 @@ def main():
 
     # STEP 3 — Convert to text chunks
     logger.info("\n[Step 3] Converting to text chunks...")
-    gl_chunks = chunk_gl_transactions(df_gl, sample_size=30000)
+    gl_chunks = chunk_gl_transactions(df_gl, sample_size=5000)
     planning_chunks = chunk_planning_data(df_planning)
+    # Cap planning chunks to stay within free tier 10K document limit
+    if len(planning_chunks) > 4500:
+        import random; random.seed(42)
+        planning_chunks = random.sample(planning_chunks, 4500)
+        logger.info(f"  Planning chunks capped to 4,500 for free tier.")
     all_chunks = gl_chunks + planning_chunks
     logger.info(f"  Total chunks to index: {len(all_chunks):,}")
 
