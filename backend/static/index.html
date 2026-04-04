@@ -217,8 +217,9 @@
             margin-right: 6px;
             margin-bottom: 4px;
         }
-        .badge-gl   { background: rgba(88,166,255,0.15); color: #58a6ff; border: 1px solid rgba(88,166,255,0.3); }
-        .badge-plan { background: rgba(63,185,80,0.15);  color: #3fb950; border: 1px solid rgba(63,185,80,0.3); }
+        .badge-gl      { background: rgba(88,166,255,0.15);  color: #58a6ff; border: 1px solid rgba(88,166,255,0.3); }
+        .badge-plan    { background: rgba(63,185,80,0.15);   color: #3fb950; border: 1px solid rgba(63,185,80,0.3); }
+        .badge-revenue { background: rgba(210,153,34,0.15);  color: #d29922; border: 1px solid rgba(210,153,34,0.3); }
 
         /* ── Typing indicator ── */
         .typing { display: flex; gap: 4px; align-items: center; padding: 4px 0; }
@@ -309,12 +310,12 @@
 
     <div>
         <div class="sidebar-section-title">💡 Example Questions</div>
-        <button class="example-btn" onclick="prefill(this)">What was the budget vs actuals variance for Finance in Q1 2023?</button>
-        <button class="example-btn" onclick="prefill(this)">Which departments had the highest People Costs overspend?</button>
-        <button class="example-btn" onclick="prefill(this)">Show me large vendor invoices from January 2023.</button>
-        <button class="example-btn" onclick="prefill(this)">Which cost centers are at risk of going over budget?</button>
-        <button class="example-btn" onclick="prefill(this)">What is the total forecast for Salaries and Wages in Q2 2023?</button>
-        <button class="example-btn" onclick="prefill(this)">Compare budget vs actuals for GL account 6100.</button>
+        <button class="example-btn" onclick="prefill(this)">What was total revenue for Americas in Q1 FY2025?</button>
+        <button class="example-btn" onclick="prefill(this)">Which revenue stream missed its target the most in FY2026?</button>
+        <button class="example-btn" onclick="prefill(this)">Compare EMEA vs APAC revenue performance in FY2025.</button>
+        <button class="example-btn" onclick="prefill(this)">Is Software Engineering over budget in FY2026?</button>
+        <button class="example-btn" onclick="prefill(this)">What is our estimated operating income for FY2025?</button>
+        <button class="example-btn" onclick="prefill(this)">Which departments had the highest People Costs variance in Q2 FY2025?</button>
     </div>
 
     <hr class="divider" />
@@ -329,13 +330,14 @@
 <div id="main">
     <div id="hero">
         <h1>🏦 FinSight AI</h1>
-        <p>Ask anything about Crestwood Capital Group's financial data — GL transactions, budgets, forecasts, and variance analysis</p>
+        <p>Ask anything about Crestwood Capital Group's financials — revenue performance, budget vs actuals, forecasts, and GL transaction detail</p>
     </div>
 
     <div id="stats">
-        <div class="chip">📄 GL Transactions <span>5,000</span> indexed</div>
-        <div class="chip">📊 Planning Records <span>4,500</span> indexed</div>
-        <div class="chip">📅 Coverage <span>FY2023–FY2026</span></div>
+        <div class="chip">💰 Revenue Planning <span>120</span> chunks</div>
+        <div class="chip">📊 Expense Planning <span>2,856</span> chunks</div>
+        <div class="chip">📄 GL Transactions <span>1,498</span> chunks</div>
+        <div class="chip">📅 Coverage <span>FY2025–FY2026</span></div>
         <div class="chip">🔍 <span>Hybrid Vector + BM25</span></div>
         <div class="chip">🤖 <span>GPT-4o</span></div>
     </div>
@@ -406,8 +408,8 @@
             sources.forEach(src => {
                 const card = document.createElement('div');
                 card.className = 'source-card';
-                const badgeClass = src.data_type === 'gl_transaction' ? 'badge-gl' : 'badge-plan';
-                const badgeLabel = src.data_type === 'gl_transaction' ? 'GL Transaction' : 'Planning Data';
+                const badgeClass = src.data_type === 'gl_transaction' ? 'badge-gl' : src.data_type === 'planning_revenue' ? 'badge-revenue' : 'badge-plan';
+                const badgeLabel = src.data_type === 'gl_transaction' ? 'GL Transaction' : src.data_type === 'planning_revenue' ? 'Revenue Planning' : 'Expense Planning';
                 card.innerHTML = `
                     <span class="badge ${badgeClass}">${badgeLabel}</span>
                     <strong>${src.title}</strong>
