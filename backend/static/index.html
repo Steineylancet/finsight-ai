@@ -1,0 +1,587 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>FinSight AI — Crestwood Capital Group</title>
+    <style>
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+        body {
+            background: #0d1117;
+            color: #e6edf3;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            height: 100vh;
+            display: flex;
+            overflow: hidden;
+        }
+
+        /* ── Sidebar ── */
+        #sidebar {
+            width: 280px;
+            min-width: 280px;
+            background: linear-gradient(180deg, #161b22 0%, #0d1117 100%);
+            border-right: 1px solid #21262d;
+            display: flex;
+            flex-direction: column;
+            padding: 24px 16px;
+            gap: 16px;
+            overflow-y: auto;
+        }
+
+        .sidebar-logo { font-size: 1.4rem; font-weight: 800; color: #e6edf3; }
+        .sidebar-sub  { font-size: 0.8rem; color: #58a6ff; margin-top: 2px; }
+
+        .divider { border: none; border-top: 1px solid #21262d; margin: 4px 0; }
+
+        .sidebar-section-title {
+            font-size: 0.75rem;
+            font-weight: 600;
+            color: #8b949e;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            margin-bottom: 8px;
+        }
+
+        .about-text { font-size: 0.82rem; color: #8b949e; line-height: 1.6; }
+        .about-text strong { color: #c9d1d9; }
+        .about-text .highlight { color: #58a6ff; }
+
+        .example-btn {
+            width: 100%;
+            background: #21262d;
+            border: 1px solid #30363d;
+            border-radius: 8px;
+            color: #c9d1d9;
+            font-size: 0.8rem;
+            padding: 8px 12px;
+            text-align: left;
+            cursor: pointer;
+            transition: all 0.15s;
+            margin-bottom: 6px;
+            line-height: 1.4;
+        }
+        .example-btn:hover {
+            background: #30363d;
+            border-color: #58a6ff;
+            color: #e6edf3;
+        }
+
+        .clear-btn {
+            width: 100%;
+            background: transparent;
+            border: 1px solid #30363d;
+            border-radius: 8px;
+            color: #8b949e;
+            font-size: 0.82rem;
+            padding: 8px 12px;
+            cursor: pointer;
+            transition: all 0.15s;
+            margin-top: 4px;
+        }
+        .clear-btn:hover { border-color: #f85149; color: #f85149; }
+
+        .sidebar-footer { font-size: 0.7rem; color: #484f58; margin-top: auto; line-height: 1.6; }
+
+        /* ── Main ── */
+        #main {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        /* ── Hero ── */
+        #hero {
+            background: linear-gradient(135deg, #1a237e 0%, #0d47a1 50%, #006064 100%);
+            padding: 20px 32px;
+            flex-shrink: 0;
+        }
+        #hero h1 { font-size: 1.6rem; font-weight: 800; color: #fff; }
+        #hero p  { font-size: 0.85rem; color: rgba(255,255,255,0.7); margin-top: 4px; }
+
+        /* ── Stats ── */
+        #stats {
+            display: flex;
+            gap: 10px;
+            padding: 12px 32px;
+            background: #0d1117;
+            border-bottom: 1px solid #21262d;
+            flex-wrap: wrap;
+            flex-shrink: 0;
+        }
+        .chip {
+            background: #161b22;
+            border: 1px solid #30363d;
+            border-radius: 20px;
+            padding: 4px 12px;
+            font-size: 0.75rem;
+            color: #8b949e;
+        }
+        .chip span { color: #58a6ff; font-weight: 600; }
+
+        /* ── Chat area ── */
+        #chat-area {
+            flex: 1;
+            overflow-y: auto;
+            padding: 24px 32px;
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+        }
+
+        .message {
+            display: flex;
+            gap: 12px;
+            max-width: 860px;
+            width: 100%;
+        }
+        .message.user { align-self: flex-end; flex-direction: row-reverse; }
+
+        .avatar {
+            width: 34px;
+            height: 34px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1rem;
+            flex-shrink: 0;
+        }
+        .avatar.user-av { background: #e8391e; }
+        .avatar.bot-av  { background: #1f6feb; }
+
+        .bubble {
+            background: #161b22;
+            border: 1px solid #21262d;
+            border-radius: 12px;
+            padding: 14px 18px;
+            font-size: 0.9rem;
+            line-height: 1.7;
+            color: #e6edf3;
+            max-width: 100%;
+            word-break: break-word;
+        }
+        .message.user .bubble {
+            background: #1c2128;
+            border-color: #30363d;
+        }
+
+        .bubble p { margin-bottom: 8px; }
+        .bubble p:last-child { margin-bottom: 0; }
+        .bubble strong { color: #fff; }
+        .bubble ul, .bubble ol { padding-left: 20px; margin: 6px 0; }
+        .bubble li { margin-bottom: 4px; }
+
+        /* ── Sources ── */
+        .sources-toggle {
+            background: none;
+            border: 1px solid #21262d;
+            border-radius: 6px;
+            color: #8b949e;
+            font-size: 0.78rem;
+            padding: 5px 10px;
+            cursor: pointer;
+            margin-top: 8px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            transition: all 0.15s;
+        }
+        .sources-toggle:hover { border-color: #58a6ff; color: #58a6ff; }
+
+        .sources-panel { display: none; margin-top: 8px; }
+        .sources-panel.open { display: block; }
+
+        .source-card {
+            background: #0d1117;
+            border: 1px solid #21262d;
+            border-left: 3px solid #58a6ff;
+            border-radius: 8px;
+            padding: 10px 14px;
+            margin-bottom: 6px;
+            font-size: 0.8rem;
+            color: #c9d1d9;
+            line-height: 1.5;
+        }
+        .source-card strong { color: #e6edf3; display: block; margin-bottom: 3px; }
+        .source-card .meta  { color: #8b949e; font-size: 0.75rem; }
+        .source-card .preview { color: #8b949e; font-size: 0.75rem; font-style: italic; margin-top: 4px; }
+
+        .badge {
+            display: inline-block;
+            border-radius: 4px;
+            padding: 1px 7px;
+            font-size: 0.7rem;
+            font-weight: 600;
+            margin-right: 6px;
+            margin-bottom: 4px;
+        }
+        .badge-gl   { background: rgba(88,166,255,0.15); color: #58a6ff; border: 1px solid rgba(88,166,255,0.3); }
+        .badge-plan { background: rgba(63,185,80,0.15);  color: #3fb950; border: 1px solid rgba(63,185,80,0.3); }
+
+        /* ── Typing indicator ── */
+        .typing { display: flex; gap: 4px; align-items: center; padding: 4px 0; }
+        .typing span {
+            width: 7px; height: 7px;
+            background: #58a6ff;
+            border-radius: 50%;
+            animation: bounce 1.2s infinite;
+        }
+        .typing span:nth-child(2) { animation-delay: 0.2s; }
+        .typing span:nth-child(3) { animation-delay: 0.4s; }
+        @keyframes bounce {
+            0%, 80%, 100% { transform: translateY(0); opacity: 0.4; }
+            40% { transform: translateY(-6px); opacity: 1; }
+        }
+
+        /* ── Input bar ── */
+        #input-bar {
+            padding: 16px 32px;
+            background: #0d1117;
+            border-top: 1px solid #21262d;
+            flex-shrink: 0;
+        }
+        #input-form {
+            display: flex;
+            gap: 10px;
+            max-width: 860px;
+        }
+        #question-input {
+            flex: 1;
+            background: #161b22;
+            border: 1px solid #30363d;
+            border-radius: 10px;
+            color: #e6edf3;
+            font-size: 0.9rem;
+            padding: 12px 16px;
+            outline: none;
+            transition: border-color 0.15s;
+            resize: none;
+            max-height: 120px;
+            font-family: inherit;
+        }
+        #question-input:focus { border-color: #58a6ff; }
+        #question-input::placeholder { color: #484f58; }
+
+        #send-btn {
+            background: #1f6feb;
+            border: none;
+            border-radius: 10px;
+            color: #fff;
+            font-size: 1rem;
+            padding: 12px 20px;
+            cursor: pointer;
+            transition: background 0.15s;
+            align-self: flex-end;
+        }
+        #send-btn:hover { background: #388bfd; }
+        #send-btn:disabled { background: #21262d; color: #484f58; cursor: not-allowed; }
+
+        /* ── Scrollbar ── */
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: #30363d; border-radius: 3px; }
+    </style>
+</head>
+<body>
+
+<!-- ── Sidebar ── -->
+<div id="sidebar">
+    <div>
+        <div class="sidebar-logo">🏦 FinSight AI</div>
+        <div class="sidebar-sub">Financial Intelligence Assistant</div>
+    </div>
+
+    <hr class="divider" />
+
+    <div>
+        <div class="sidebar-section-title">About</div>
+        <div class="about-text">
+            Answers questions over <strong>Crestwood Capital Group's</strong> internal financial data —
+            GL transactions, budget vs actuals, and forecasts —
+            powered by <span class="highlight">Azure OpenAI GPT-4o</span>
+            and <span class="highlight">Azure AI Search</span>.
+        </div>
+    </div>
+
+    <hr class="divider" />
+
+    <div>
+        <div class="sidebar-section-title">💡 Example Questions</div>
+        <button class="example-btn" onclick="prefill(this)">What was the budget vs actuals variance for Finance in Q1 2023?</button>
+        <button class="example-btn" onclick="prefill(this)">Which departments had the highest People Costs overspend?</button>
+        <button class="example-btn" onclick="prefill(this)">Show me large vendor invoices from January 2023.</button>
+        <button class="example-btn" onclick="prefill(this)">Which cost centers are at risk of going over budget?</button>
+        <button class="example-btn" onclick="prefill(this)">What is the total forecast for Salaries and Wages in Q2 2023?</button>
+        <button class="example-btn" onclick="prefill(this)">Compare budget vs actuals for GL account 6100.</button>
+    </div>
+
+    <hr class="divider" />
+    <button class="clear-btn" onclick="clearChat()">🗑️ Clear Chat</button>
+
+    <div class="sidebar-footer">
+        Azure OpenAI · Azure AI Search<br>FastAPI · Crestwood Capital Group
+    </div>
+</div>
+
+<!-- ── Main ── -->
+<div id="main">
+    <div id="hero">
+        <h1>🏦 FinSight AI</h1>
+        <p>Ask anything about Crestwood Capital Group's financial data — GL transactions, budgets, forecasts, and variance analysis</p>
+    </div>
+
+    <div id="stats">
+        <div class="chip">📄 GL Transactions <span>5,000</span> indexed</div>
+        <div class="chip">📊 Planning Records <span>4,500</span> indexed</div>
+        <div class="chip">📅 Coverage <span>FY2023–FY2026</span></div>
+        <div class="chip">🔍 <span>Hybrid Vector + BM25</span></div>
+        <div class="chip">🤖 <span>GPT-4o</span></div>
+    </div>
+
+    <div id="chat-area"></div>
+
+    <div id="input-bar">
+        <form id="input-form" onsubmit="sendMessage(event)">
+            <textarea id="question-input" placeholder="Ask a financial question about Crestwood Capital Group..." rows="1"
+                onkeydown="handleKey(event)"></textarea>
+            <button type="submit" id="send-btn">➤</button>
+        </form>
+    </div>
+</div>
+
+<script>
+    const chatArea = document.getElementById('chat-area');
+    const input    = document.getElementById('question-input');
+    const sendBtn  = document.getElementById('send-btn');
+    let history = [];
+
+    function scrollBottom() {
+        chatArea.scrollTop = chatArea.scrollHeight;
+    }
+
+    function handleKey(e) {
+        if (e.key === 'Enter' && !e.shiftKey) {
+            e.preventDefault();
+            document.getElementById('input-form').dispatchEvent(new Event('submit'));
+        }
+    }
+
+    function prefill(btn) {
+        input.value = btn.textContent;
+        input.focus();
+    }
+
+    function clearChat() {
+        chatArea.innerHTML = '';
+        history = [];
+    }
+
+    function addMessage(role, content, sources = []) {
+        const wrap = document.createElement('div');
+        wrap.className = `message ${role}`;
+
+        const avatar = document.createElement('div');
+        avatar.className = `avatar ${role === 'user' ? 'user-av' : 'bot-av'}`;
+        avatar.textContent = role === 'user' ? '👤' : '🏦';
+
+        const right = document.createElement('div');
+        right.style.maxWidth = '760px';
+
+        const bubble = document.createElement('div');
+        bubble.className = 'bubble';
+        bubble.innerHTML = formatText(content);
+
+        right.appendChild(bubble);
+
+        if (sources.length > 0) {
+            const toggle = document.createElement('button');
+            toggle.className = 'sources-toggle';
+            toggle.innerHTML = `📎 ${sources.length} Source(s) Retrieved ▾`;
+
+            const panel = document.createElement('div');
+            panel.className = 'sources-panel';
+
+            sources.forEach(src => {
+                const card = document.createElement('div');
+                card.className = 'source-card';
+                const badgeClass = src.data_type === 'gl_transaction' ? 'badge-gl' : 'badge-plan';
+                const badgeLabel = src.data_type === 'gl_transaction' ? 'GL Transaction' : 'Planning Data';
+                card.innerHTML = `
+                    <span class="badge ${badgeClass}">${badgeLabel}</span>
+                    <strong>${src.title}</strong>
+                    <div class="meta">Entity: ${src.entity} &nbsp;|&nbsp; Dept: ${src.department} &nbsp;|&nbsp; FY${src.fiscal_year} P${src.fiscal_period}</div>
+                    <div class="preview">${src.preview}...</div>
+                `;
+                panel.appendChild(card);
+            });
+
+            toggle.onclick = () => {
+                panel.classList.toggle('open');
+                toggle.innerHTML = panel.classList.contains('open')
+                    ? `📎 ${sources.length} Source(s) Retrieved ▴`
+                    : `📎 ${sources.length} Source(s) Retrieved ▾`;
+            };
+
+            right.appendChild(toggle);
+            right.appendChild(panel);
+        }
+
+        wrap.appendChild(avatar);
+        wrap.appendChild(right);
+        chatArea.appendChild(wrap);
+        scrollBottom();
+        return bubble;
+    }
+
+    function addTyping() {
+        const wrap = document.createElement('div');
+        wrap.className = 'message bot';
+        wrap.id = 'typing-indicator';
+
+        const avatar = document.createElement('div');
+        avatar.className = 'avatar bot-av';
+        avatar.textContent = '🏦';
+
+        const bubble = document.createElement('div');
+        bubble.className = 'bubble';
+        bubble.innerHTML = '<div class="typing"><span></span><span></span><span></span></div>';
+
+        wrap.appendChild(avatar);
+        wrap.appendChild(bubble);
+        chatArea.appendChild(wrap);
+        scrollBottom();
+        return wrap;
+    }
+
+    function formatText(text) {
+        return text
+            .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+            .replace(/\*(.*?)\*/g, '<em>$1</em>')
+            .replace(/^#{1,3}\s(.+)/gm, '<strong>$1</strong>')
+            .replace(/^[-•]\s(.+)/gm, '<li>$1</li>')
+            .replace(/(<li>.*<\/li>)/s, '<ul>$1</ul>')
+            .split('\n\n').map(p => p.trim() ? `<p>${p}</p>` : '').join('');
+    }
+
+    async function sendMessage(e) {
+        e.preventDefault();
+        const question = input.value.trim();
+        if (!question) return;
+
+        input.value = '';
+        sendBtn.disabled = true;
+
+        addMessage('user', question);
+        history.push({ role: 'user', content: question });
+
+        const typingEl = addTyping();
+
+        let fullResponse = '';
+        let sources = [];
+        let botBubble = null;
+
+        try {
+            const resp = await fetch('/chat', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    question,
+                    conversation_history: history.slice(-10)
+                })
+            });
+
+            if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
+
+            const reader = resp.body.getReader();
+            const decoder = new TextDecoder();
+            let buffer = '';
+
+            typingEl.remove();
+            const wrap = document.createElement('div');
+            wrap.className = 'message bot';
+            const avatar = document.createElement('div');
+            avatar.className = 'avatar bot-av';
+            avatar.textContent = '🏦';
+            const right = document.createElement('div');
+            right.style.maxWidth = '760px';
+            botBubble = document.createElement('div');
+            botBubble.className = 'bubble';
+            right.appendChild(botBubble);
+            wrap.appendChild(avatar);
+            wrap.appendChild(right);
+            chatArea.appendChild(wrap);
+
+            while (true) {
+                const { done, value } = await reader.read();
+                if (done) break;
+
+                buffer += decoder.decode(value, { stream: true });
+                const lines = buffer.split('\n');
+                buffer = lines.pop();
+
+                for (const line of lines) {
+                    if (!line.startsWith('data: ')) continue;
+                    const data_str = line.slice(6);
+                    if (data_str === '[DONE]') break;
+                    try {
+                        const data = JSON.parse(data_str);
+                        if (data.type === 'sources') {
+                            sources = data.sources;
+                        } else if (data.type === 'token') {
+                            fullResponse += data.content;
+                            botBubble.innerHTML = formatText(fullResponse) + '<span style="opacity:0.5">▌</span>';
+                            scrollBottom();
+                        }
+                    } catch {}
+                }
+            }
+
+            botBubble.innerHTML = formatText(fullResponse);
+
+            if (sources.length > 0) {
+                const toggle = document.createElement('button');
+                toggle.className = 'sources-toggle';
+                toggle.innerHTML = `📎 ${sources.length} Source(s) Retrieved ▾`;
+
+                const panel = document.createElement('div');
+                panel.className = 'sources-panel';
+
+                sources.forEach(src => {
+                    const card = document.createElement('div');
+                    card.className = 'source-card';
+                    const badgeClass = src.data_type === 'gl_transaction' ? 'badge-gl' : 'badge-plan';
+                    const badgeLabel = src.data_type === 'gl_transaction' ? 'GL Transaction' : 'Planning Data';
+                    card.innerHTML = `
+                        <span class="badge ${badgeClass}">${badgeLabel}</span>
+                        <strong>${src.title}</strong>
+                        <div class="meta">Entity: ${src.entity} &nbsp;|&nbsp; Dept: ${src.department} &nbsp;|&nbsp; FY${src.fiscal_year} P${src.fiscal_period}</div>
+                        <div class="preview">${src.preview}...</div>
+                    `;
+                    panel.appendChild(card);
+                });
+
+                toggle.onclick = () => {
+                    panel.classList.toggle('open');
+                    toggle.innerHTML = panel.classList.contains('open')
+                        ? `📎 ${sources.length} Source(s) Retrieved ▴`
+                        : `📎 ${sources.length} Source(s) Retrieved ▾`;
+                };
+
+                right.appendChild(toggle);
+                right.appendChild(panel);
+            }
+
+        } catch (err) {
+            typingEl.remove();
+            addMessage('bot', `⚠️ Error: ${err.message}`);
+        }
+
+        history.push({ role: 'assistant', content: fullResponse });
+        sendBtn.disabled = false;
+        scrollBottom();
+    }
+</script>
+</body>
+</html>

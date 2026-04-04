@@ -5,9 +5,11 @@ Entry point for the RAG chatbot API
 
 import logging
 import json
+import os
 from fastapi import FastAPI, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import StreamingResponse
+from fastapi.responses import StreamingResponse, FileResponse
+from fastapi.staticfiles import StaticFiles
 from slowapi import Limiter, _rate_limit_exceeded_handler
 from slowapi.util import get_remote_address
 from slowapi.errors import RateLimitExceeded
@@ -43,6 +45,10 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+# ── Static Files ──────────────────────────────────────────────────────────────
+_static_dir = os.path.join(os.path.dirname(__file__), "static")
+app.mount("/static", StaticFiles(directory=_static_dir), name="static")
+
 # ── Startup ───────────────────────────────────────────────────────────────────
 rag_pipeline: RAGPipeline = None
 
@@ -56,13 +62,9 @@ async def startup_event():
 
 # ── Endpoints ─────────────────────────────────────────────────────────────────
 
-@app.get("/", response_model=HealthResponse)
+@app.get("/", include_in_schema=False)
 async def root():
-    return HealthResponse(
-        status="ok",
-        service="FinSight AI",
-        version="1.0.0"
-    )
+    return FileResponse(os.path.join(_static_dir, "index.html"))
 
 
 @app.get("/health", response_model=HealthResponse)
