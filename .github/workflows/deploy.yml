@@ -26,7 +26,6 @@ jobs:
       - name: Run tests
         run: pytest tests/ -v --tb=short
         env:
-          # Dummy values for tests (real calls are mocked)
           AZURE_OPENAI_ENDPOINT: https://dummy.openai.azure.com/
           AZURE_OPENAI_API_KEY: dummy-key
           AZURE_OPENAI_API_VERSION: 2024-02-01
@@ -56,28 +55,34 @@ jobs:
       - name: Install dependencies
         run: pip install -r requirements.txt
 
-      - name: Deploy to Azure Web App
-        uses: azure/webapps-deploy@v3
+      - name: Zip app for deployment
+        run: zip -r app.zip . -x "*.git*" -x "data/*" -x "gl_data/*" -x "master_data/*" -x "planning_data/*" -x "__pycache__/*"
+
+      - name: Login to Azure
+        uses: azure/login@v1
         with:
-          app-name: finsight-ai-app
-          publish-profile: ${{ secrets.AZURE_WEBAPP_PUBLISH_PROFILE }}
-          package: .
+          creds: ${{ secrets.AZURE_CREDENTIALS }}
+
+      - name: Deploy to Azure Web App via ZIP
+        run: |
+          az webapp deployment source config-zip \
+            --name finsight-ai-app \
+            --resource-group finsight-ai-rg \
+            --src app.zip
 
       - name: Set Azure App Settings
-        uses: azure/CLI@v1
-        with:
-          inlineScript: |
-            az webapp config appsettings set \
-              --name finsight-ai-app \
-              --resource-group finsight-ai-rg \
-              --settings \
-                AZURE_OPENAI_ENDPOINT="${{ secrets.AZURE_OPENAI_ENDPOINT }}" \
-                AZURE_OPENAI_API_KEY="${{ secrets.AZURE_OPENAI_API_KEY }}" \
-                AZURE_OPENAI_API_VERSION="2024-02-01" \
-                AZURE_OPENAI_CHAT_DEPLOYMENT="gpt-4o" \
-                AZURE_OPENAI_EMBEDDING_DEPLOYMENT="text-embedding-ada-002" \
-                AZURE_SEARCH_ENDPOINT="${{ secrets.AZURE_SEARCH_ENDPOINT }}" \
-                AZURE_SEARCH_API_KEY="${{ secrets.AZURE_SEARCH_API_KEY }}" \
-                AZURE_SEARCH_INDEX_NAME="finsight-index" \
-                AZURE_STORAGE_CONNECTION_STRING="${{ secrets.AZURE_STORAGE_CONNECTION_STRING }}" \
-                AZURE_STORAGE_CONTAINER_NAME="financial-data"
+        run: |
+          az webapp config appsettings set \
+            --name finsight-ai-app \
+            --resource-group finsight-ai-rg \
+            --settings \
+              AZURE_OPENAI_ENDPOINT="${{ secrets.AZURE_OPENAI_ENDPOINT }}" \
+              AZURE_OPENAI_API_KEY="${{ secrets.AZURE_OPENAI_API_KEY }}" \
+              AZURE_OPENAI_API_VERSION="2024-02-01" \
+              AZURE_OPENAI_CHAT_DEPLOYMENT="gpt-4o" \
+              AZURE_OPENAI_EMBEDDING_DEPLOYMENT="text-embedding-ada-002" \
+              AZURE_SEARCH_ENDPOINT="${{ secrets.AZURE_SEARCH_ENDPOINT }}" \
+              AZURE_SEARCH_API_KEY="${{ secrets.AZURE_SEARCH_API_KEY }}" \
+              AZURE_SEARCH_INDEX_NAME="finsight-index" \
+              AZURE_STORAGE_CONNECTION_STRING="${{ secrets.AZURE_STORAGE_CONNECTION_STRING }}" \
+              AZURE_STORAGE_CONTAINER_NAME="financial-data"
