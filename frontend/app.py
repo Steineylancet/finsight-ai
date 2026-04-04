@@ -8,7 +8,7 @@ import requests
 import json
 
 # ── Config ────────────────────────────────────────────────────────────────────
-BACKEND_URL = "http://localhost:8000"
+BACKEND_URL = "https://finsight-ai-app.azurewebsites.net"
 
 st.set_page_config(
     page_title="FinSight AI",
