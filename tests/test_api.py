@@ -40,7 +40,7 @@ def test_health_check(client):
 def test_root_endpoint(client):
     response = client.get("/")
     assert response.status_code == 200
-    assert response.json()["status"] == "ok"
+    assert "text/html" in response.headers["content-type"]
 
 
 def test_chat_empty_question(client):
