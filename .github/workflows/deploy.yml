@@ -52,11 +52,8 @@ jobs:
         with:
           python-version: "3.11"
 
-      - name: Install dependencies into package folder
-        run: pip install -r requirements.txt --target=".python_packages/lib/site-packages"
-
       - name: Zip app for deployment
-        run: zip -r app.zip . -x "*.git*" -x "data/*" -x "gl_data/*" -x "master_data/*" -x "planning_data/*" -x "__pycache__/*"
+        run: zip -r app.zip . -x "*.git*" -x "data/*" -x "gl_data/*" -x "master_data/*" -x "planning_data/*" -x "__pycache__/*" -x ".python_packages/*"
 
       - name: Login to Azure
         uses: azure/login@v1
@@ -76,6 +73,7 @@ jobs:
             --name finsight-ai-app \
             --resource-group finsight-ai-rg \
             --settings \
+              SCM_DO_BUILD_DURING_DEPLOYMENT="true" \
               AZURE_OPENAI_ENDPOINT="${{ secrets.AZURE_OPENAI_ENDPOINT }}" \
               AZURE_OPENAI_API_KEY="${{ secrets.AZURE_OPENAI_API_KEY }}" \
               AZURE_OPENAI_API_VERSION="2024-02-01" \
