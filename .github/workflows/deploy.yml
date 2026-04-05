@@ -47,27 +47,12 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Set up Python 3.11
-        uses: actions/setup-python@v5
-        with:
-          python-version: "3.11"
-
-      - name: Zip app for deployment
-        run: zip -r app.zip . -x "*.git*" -x "data/*" -x "gl_data/*" -x "master_data/*" -x "planning_data/*" -x "__pycache__/*" -x ".python_packages/*"
-
       - name: Login to Azure
         uses: azure/login@v1
         with:
           creds: ${{ secrets.AZURE_CREDENTIALS }}
 
-      - name: Deploy to Azure Web App via ZIP
-        run: |
-          az webapp deployment source config-zip \
-            --name finsight-ai-app \
-            --resource-group finsight-ai-rg \
-            --src app.zip
-
-      - name: Set Azure App Settings
+      - name: Set app settings (before deploy)
         run: |
           az webapp config appsettings set \
             --name finsight-ai-app \
@@ -83,4 +68,27 @@ jobs:
               AZURE_SEARCH_API_KEY="${{ secrets.AZURE_SEARCH_API_KEY }}" \
               AZURE_SEARCH_INDEX_NAME="finsight-index" \
               AZURE_STORAGE_CONNECTION_STRING="${{ secrets.AZURE_STORAGE_CONNECTION_STRING }}" \
-              AZURE_STORAGE_CONTAINER_NAME="financial-data"
+              AZURE_STORAGE_CONTAINER_NAME="financial-data" \
+            --output none
+
+      - name: Zip app for deployment
+        run: |
+          zip -r app.zip . \
+            -x "*.git*" \
+            -x "gl_data/*" \
+            -x "master_data/*" \
+            -x "planning_data/*" \
+            -x "__pycache__/*" \
+            -x "*.pyc" \
+            -x ".python_packages/*" \
+            -x "ingest_log.txt" \
+            -x "setup_azure.ps1"
+
+      - name: Deploy ZIP to Azure
+        run: |
+          az webapp deployment source config-zip \
+            --name finsight-ai-app \
+            --resource-group finsight-ai-rg \
+            --src app.zip \
+            --timeout 600 \
+            --output none
