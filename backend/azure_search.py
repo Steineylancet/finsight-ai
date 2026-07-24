@@ -102,6 +102,14 @@ class AzureSearchClient:
             logger.error(f"Failed to create index: {e}")
             raise
 
+    def delete_index(self):
+        """Delete the index if it exists (used before a full re-index)."""
+        try:
+            self.index_client.delete_index(self.index_name)
+            logger.info(f"Index '{self.index_name}' deleted.")
+        except Exception:
+            logger.info(f"Index '{self.index_name}' did not exist, nothing to delete.")
+
     def upload_documents(self, documents: list[dict], batch_size: int = 100):
         """Upload documents (chunks + embeddings) to the index in batches."""
         total = len(documents)

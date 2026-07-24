@@ -299,8 +299,8 @@
     <div>
         <div class="sidebar-section-title">About</div>
         <div class="about-text">
-            Answers questions over <strong>Crestwood Capital Group's</strong> internal financial data —
-            GL transactions, budget vs actuals, and forecasts —
+            Answers questions over <strong>Crestwood Capital Group's</strong> internal management documents —
+            quarterly department reviews, budget outlooks, expense policies, and vendor profiles —
             powered by <span class="highlight">Azure OpenAI GPT-4o</span>
             and <span class="highlight">Azure AI Search</span>.
         </div>
@@ -310,12 +310,12 @@
 
     <div>
         <div class="sidebar-section-title">💡 Example Questions</div>
-        <button class="example-btn" onclick="prefill(this)">What was total revenue for Americas in Q1 FY2025?</button>
-        <button class="example-btn" onclick="prefill(this)">Which revenue stream missed its target the most in FY2026?</button>
-        <button class="example-btn" onclick="prefill(this)">Compare EMEA vs APAC revenue performance in FY2025.</button>
-        <button class="example-btn" onclick="prefill(this)">Is Software Engineering over budget in FY2026?</button>
-        <button class="example-btn" onclick="prefill(this)">What is our estimated operating income for FY2025?</button>
-        <button class="example-btn" onclick="prefill(this)">Which departments had the highest People Costs variance in Q2 FY2025?</button>
+        <button class="example-btn" onclick="prefill(this)">How did Software Engineering perform against budget in Q2 FY2025?</button>
+        <button class="example-btn" onclick="prefill(this)">What is the per diem rate for travel in APAC?</button>
+        <button class="example-btn" onclick="prefill(this)">Who approves a $30,000 software purchase?</button>
+        <button class="example-btn" onclick="prefill(this)">What is the outlook for IT Infrastructure spend in Q3 FY2026?</button>
+        <button class="example-btn" onclick="prefill(this)">What do we know about our relationship with Workday?</button>
+        <button class="example-btn" onclick="prefill(this)">What variance threshold triggers a CFO briefing?</button>
     </div>
 
     <hr class="divider" />
@@ -330,13 +330,14 @@
 <div id="main">
     <div id="hero">
         <h1>🏦 FinSight AI</h1>
-        <p>Ask anything about Crestwood Capital Group's financials — revenue performance, budget vs actuals, forecasts, and GL transaction detail</p>
+        <p>Ask anything about Crestwood Capital Group's management documents — quarterly reviews, budget outlooks, expense policies, and vendor profiles</p>
     </div>
 
     <div id="stats">
-        <div class="chip">💰 Revenue Planning <span>120</span> chunks</div>
-        <div class="chip">📊 Expense Planning <span>2,856</span> chunks</div>
-        <div class="chip">📄 GL Transactions <span>1,498</span> chunks</div>
+        <div class="chip">📝 Quarterly Reviews <span>65</span> memos</div>
+        <div class="chip">🔮 Budget Outlooks <span>39</span> memos</div>
+        <div class="chip">📋 Policies <span>8</span> docs</div>
+        <div class="chip">🤝 Vendor Profiles <span>10</span> docs</div>
         <div class="chip">📅 Coverage <span>FY2025–FY2026</span></div>
         <div class="chip">🔍 <span>Hybrid Vector + BM25</span></div>
         <div class="chip">🤖 <span>GPT-4o</span></div>
@@ -408,8 +409,8 @@
             sources.forEach(src => {
                 const card = document.createElement('div');
                 card.className = 'source-card';
-                const badgeClass = src.data_type === 'gl_transaction' ? 'badge-gl' : src.data_type === 'planning_revenue' ? 'badge-revenue' : 'badge-plan';
-                const badgeLabel = src.data_type === 'gl_transaction' ? 'GL Transaction' : src.data_type === 'planning_revenue' ? 'Revenue Planning' : 'Expense Planning';
+                const badgeClass = src.data_type === 'expense_policy' ? 'badge-gl' : src.data_type === 'outlook_memo' ? 'badge-revenue' : src.data_type === 'vendor_profile' ? 'badge-revenue' : 'badge-plan';
+                const badgeLabel = src.data_type === 'expense_policy' ? 'Policy' : src.data_type === 'outlook_memo' ? 'Budget Outlook' : src.data_type === 'vendor_profile' ? 'Vendor Profile' : 'Quarterly Memo';
                 card.innerHTML = `
                     <span class="badge ${badgeClass}">${badgeLabel}</span>
                     <strong>${src.title}</strong>
