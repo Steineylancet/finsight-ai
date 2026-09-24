@@ -4,199 +4,122 @@ LangGraph subgraph: given a department + period, decompose why actuals
 deviated from budget and generate a plain-English narrative.
 
 Steps:
-  1. extract_params   — mini LLM extracts dept / FY / quarter from query
-  2. query_data       — pandas tool: actuals vs budget by expense category
-  3. rank_drivers     — pure Python: sort by |variance|, pick top drivers
-  4. draft_narrative  — full LLM: write explanation in FP&A language
+  1. validate_params  — resolve department against the whitelist, require a period
+  2. query_data       — pandas tool: variance by expense category, largest first
+  3. build_table      — ranked markdown table, streamed to the UI
+  4. draft_narrative  — full model explains the top drivers (streamed)
 """
 
 import json
 import logging
-import os
-from langgraph.graph import StateGraph, END
-from langchain_openai import AzureChatOpenAI
-from langchain_core.messages import HumanMessage, SystemMessage
 
+from langchain_core.messages import HumanMessage, SystemMessage
+from langgraph.config import get_stream_writer
+from langgraph.graph import END, StateGraph
+
+from backend.graph.catalog import resolve_department
+from backend.graph.llm import final_llm
 from backend.graph.state import AgentState
-from backend.graph.tools import get_variance_breakdown
+from backend.graph.tools import get_variance_breakdown, run_tool
 
 logger = logging.getLogger(__name__)
 
 
-def _mini_llm():
-    return AzureChatOpenAI(
-        azure_endpoint=os.getenv("AZURE_OPENAI_ENDPOINT", "PLACEHOLDER"),
-        azure_deployment=os.getenv("AZURE_OPENAI_MINI_DEPLOYMENT", "gpt-5-4-mini"),
-        api_key=os.getenv("AZURE_OPENAI_API_KEY", "PLACEHOLDER"),
-        api_version=os.getenv("AZURE_OPENAI_API_VERSION", "2024-12-01-preview"),
-        temperature=0,
-    )
+def validate_params(state: AgentState) -> dict:
+    raw = state.get("department")
+    if not raw:
+        return {"error": "Which department should I analyse? For example: "
+                         "\"Why did Software Engineering overspend in Q2 FY2025?\""}
+    res = resolve_department(raw)
+    if not res.ok:
+        return {"error": res.message(raw)}
+    if not (state.get("fiscal_year") and state.get("quarter")):
+        return {"department": res.department,
+                "error": f"Which period for {res.department}? Please give a quarter and "
+                         f"fiscal year, e.g. Q2 FY2025."}
+    return {"department": res.department}
 
 
-def _full_llm():
-    return AzureChatOpenAI(
-        azure_endpoint=os.getenv("AZURE_OPENAI_ENDPOINT", "PLACEHOLDER"),
-        azure_deployment=os.getenv("AZURE_OPENAI_FULL_DEPLOYMENT", "gpt-4o"),
-        api_key=os.getenv("AZURE_OPENAI_API_KEY", "PLACEHOLDER"),
-        api_version=os.getenv("AZURE_OPENAI_API_VERSION", "2024-12-01-preview"),
-        temperature=0.3,
-    )
-
-
-# ─────────────────────────────────────────────────────────────────────────────
-# Node 1 — Extract parameters if not already present in state
-# ─────────────────────────────────────────────────────────────────────────────
-
-def extract_params(state: AgentState) -> AgentState:
-    """
-    If department / fiscal_year / quarter are already in state (set by router),
-    pass through. Otherwise, ask mini LLM to extract them from the query.
-    """
-    if state.get("department") and state.get("fiscal_year") and state.get("quarter"):
-        return state
-
-    prompt = f"""Extract the following from this financial query. Return JSON only.
-Fields: department (string or null), fiscal_year (4-digit string or null), quarter (Q1/Q2/Q3/Q4 or null).
-
-Query: {state["query"]}
-
-Example output: {{"department": "Software Engineering", "fiscal_year": "2025", "quarter": "Q2"}}"""
-
-    try:
-        response = _mini_llm().invoke([HumanMessage(content=prompt)])
-        parsed = json.loads(response.content.strip().strip("```json").strip("```"))
-        return {
-            **state,
-            "department": parsed.get("department") or state.get("department"),
-            "fiscal_year": parsed.get("fiscal_year") or state.get("fiscal_year"),
-            "quarter": parsed.get("quarter") or state.get("quarter"),
-        }
-    except Exception as e:
-        logger.warning(f"extract_params failed: {e}")
-        return {**state, "error": f"Could not extract parameters from query: {e}"}
-
-
-# ─────────────────────────────────────────────────────────────────────────────
-# Node 2 — Query data via pandas tool
-# ─────────────────────────────────────────────────────────────────────────────
-
-def query_data(state: AgentState) -> AgentState:
+def query_data(state: AgentState) -> dict:
     if state.get("error"):
-        return state
-
-    dept = state.get("department")
-    fy = state.get("fiscal_year")
-    q = state.get("quarter")
-
-    if not all([dept, fy, q]):
-        return {
-            **state,
-            "error": "Missing department, fiscal year, or quarter. Please specify all three.",
-        }
-
-    result = get_variance_breakdown.invoke({
-        "department": dept,
-        "fiscal_year": fy,
-        "quarter": q,
-    })
-
+        return {}
+    args = {"department": state["department"], "fiscal_year": state["fiscal_year"],
+            "quarter": state["quarter"]}
+    result = run_tool(get_variance_breakdown, args)
     if "error" in result:
-        return {**state, "error": result["error"]}
+        return {"error": result["error"]}
+    return {"tool_results": result,
+            "sql_query": f"get_variance_breakdown({json.dumps(args)})"}
 
-    return {**state, "tool_results": result}
 
-
-# ─────────────────────────────────────────────────────────────────────────────
-# Node 3 — Build markdown table from ranked drivers
-# ─────────────────────────────────────────────────────────────────────────────
-
-def build_table(state: AgentState) -> AgentState:
+def build_table(state: AgentState) -> dict:
     if state.get("error"):
-        return state
-
+        return {}
     drivers = state["tool_results"].get("drivers", [])
     if not drivers:
-        return {**state, "error": "No variance data available."}
+        return {"error": "No variance data available for that period."}
 
-    header = "| Expense Category | Budget ($) | Actuals ($) | Variance ($) | Variance % |"
-    sep    = "|---|---|---|---|---|"
     rows = []
     for d in drivers:
-        variance_flag = "▲" if d["Variance_BvA"] > 0 else "▼"
+        flag = "▲ over" if d["Variance_BvA"] > 0 else "▼ under"
         rows.append(
-            f"| {d['Expense_Category']} "
-            f"| {d['Budget_USD']:,.0f} "
-            f"| {d['Actuals_USD']:,.0f} "
-            f"| {variance_flag} {abs(d['Variance_BvA']):,.0f} "
-            f"| {d['Variance_BvA_Pct']:+.1f}% |"
+            f"| {d['Expense_Category']} | {d['Budget_USD']:,.0f} | {d['Actuals_USD']:,.0f} "
+            f"| {d['Variance_BvA']:+,.0f} | {d['Variance_BvA_Pct']:+.1f}% | {flag} |"
         )
-
-    table = "\n".join([header, sep] + rows)
-    return {**state, "formatted_table": table}
-
-
-# ─────────────────────────────────────────────────────────────────────────────
-# Node 4 — Draft narrative with full LLM
-# ─────────────────────────────────────────────────────────────────────────────
-
-def draft_narrative(state: AgentState) -> AgentState:
-    if state.get("error"):
-        return state
-
-    drivers = state["tool_results"].get("drivers", [])
-    dept = state["department"]
-    fy = state["fiscal_year"]
-    q = state["quarter"]
-
-    top_3 = drivers[:3]
-    top_3_text = "\n".join(
-        f"- {d['Expense_Category']}: ${d['Variance_BvA']:+,.0f} ({d['Variance_BvA_Pct']:+.1f}%)"
-        for d in top_3
+    total = state["tool_results"]["total"]
+    rows.append(
+        f"| **TOTAL** | {total['Budget_USD']:,.0f} | {total['Actuals_USD']:,.0f} "
+        f"| {total['Variance_BvA']:+,.0f} | {total['Variance_BvA_Pct']:+.1f}% | |"
     )
+    table = "\n".join(
+        ["| Expense Category | Budget ($) | Actuals ($) | Variance ($) | Variance % | |",
+         "|---|---|---|---|---|---|"] + rows
+    )
+    get_stream_writer()({"type": "table", "content": table})
+    return {"formatted_table": table}
 
-    prompt = f"""You are an FP&A analyst writing a variance commentary for {dept}, {q} FY{fy}.
 
-The top variance drivers (actuals vs budget) are:
-{top_3_text}
+def draft_narrative(state: AgentState) -> dict:
+    if state.get("error"):
+        return {}
+    r = state["tool_results"]
+    total = r["total"]
+    drivers_text = "\n".join(
+        f"- {d['Expense_Category']}: budget ${d['Budget_USD']:,.0f}, actuals "
+        f"${d['Actuals_USD']:,.0f}, variance ${d['Variance_BvA']:+,.0f} ({d['Variance_BvA_Pct']:+.1f}%)"
+        for d in r["drivers"][:3]
+    )
+    prompt = f"""Explain the budget variance for {r['department']}, {r['quarter']} FY{r['fiscal_year']}.
 
-▲ = over budget (unfavourable), ▼ = under budget (favourable).
+Total: budget ${total['Budget_USD']:,.0f}, actuals ${total['Actuals_USD']:,.0f}, variance ${total['Variance_BvA']:+,.0f} ({total['Variance_BvA_Pct']:+.1f}%).
+Top drivers (positive variance = over budget, unfavourable):
+{drivers_text}
 
-Write 2–3 concise sentences explaining these variances in plain business English.
-- Be specific: name the categories and cite the figures.
-- Do not invent reasons beyond what the numbers show.
-- Formal, factual tone. No filler phrases."""
-
+Write 2–3 concise sentences in plain business English.
+- Name the categories and cite the figures exactly as given.
+- Do not invent causes the numbers don't show; you may say what further detail would confirm the cause.
+- Formal, factual tone. No filler."""
     try:
-        response = _full_llm().invoke([
+        resp = final_llm(0.3).invoke([
             SystemMessage(content="You are a precise FP&A financial analyst."),
             HumanMessage(content=prompt),
         ])
-        return {**state, "narrative": response.content.strip()}
+        return {"narrative": resp.content.strip()}
     except Exception as e:
         logger.error(f"draft_narrative failed: {e}")
-        return {**state, "error": f"Narrative generation failed: {e}"}
-
-
-# ─────────────────────────────────────────────────────────────────────────────
-# Graph assembly
-# ─────────────────────────────────────────────────────────────────────────────
-
-def _should_continue(state: AgentState) -> str:
-    return "error" if state.get("error") else "continue"
+        return {"error": "The data was retrieved but the explanation could not be generated. "
+                         "The table above shows the variance drivers."}
 
 
 def build_variance_graph():
     graph = StateGraph(AgentState)
-
-    graph.add_node("extract_params", extract_params)
+    graph.add_node("validate_params", validate_params)
     graph.add_node("query_data", query_data)
     graph.add_node("build_table", build_table)
     graph.add_node("draft_narrative", draft_narrative)
-
-    graph.set_entry_point("extract_params")
-    graph.add_edge("extract_params", "query_data")
+    graph.set_entry_point("validate_params")
+    graph.add_edge("validate_params", "query_data")
     graph.add_edge("query_data", "build_table")
     graph.add_edge("build_table", "draft_narrative")
     graph.add_edge("draft_narrative", END)
-
     return graph.compile()

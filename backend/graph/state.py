@@ -1,34 +1,33 @@
 """
 FinSight AI — LangGraph State Definition
-Typed state shared across all nodes in the agent graph.
+Typed state shared across all nodes in the agent graph. LangGraph only
+propagates keys declared here, so every field a node writes must be listed.
 """
 
-from typing import TypedDict, Optional
+from typing import Optional, TypedDict
 
 
-class AgentState(TypedDict):
+class AgentState(TypedDict, total=False):
     # ── Input ─────────────────────────────────────────────────────────────────
     query: str
-    conversation_history: list  # list of ConversationTurn dicts
+    conversation_history: list       # [{"role": "user"|"assistant", "content": str}]
 
-    # ── Routing ───────────────────────────────────────────────────────────────
-    intent: str          # "rag" | "sql" | "variance" | "anomaly" | "commentary"
-    mode_label: str      # Human-readable badge: "RAG" | "SQL Query" | "Variance Flow" | etc.
-
-    # ── Extracted parameters (populated by classify node) ─────────────────────
+    # ── Understanding (populated by the understand node) ──────────────────────
+    standalone_query: str            # follow-ups rewritten to be self-contained
+    intent: str                      # "rag" | "variance" | "anomaly" | "commentary" | "agent"
+    mode_label: str                  # badge shown to the user
     department: Optional[str]
     fiscal_year: Optional[str]
     quarter: Optional[str]
-    threshold_pct: Optional[float]   # for anomaly scanner (default 10.0)
-    min_amount: Optional[float]      # for anomaly scanner (default 10000.0)
+    threshold_pct: Optional[float]
+    min_amount: Optional[float]
 
     # ── Results ───────────────────────────────────────────────────────────────
-    formatted_table: Optional[str]   # Markdown table string from pandas tool
-    narrative: Optional[str]         # GPT-generated explanation / commentary
-    sources: list                    # RAG source citations (Source model dicts)
-    sql_query: Optional[str]         # Pandas expression shown to user (collapsed)
-    tool_results: Optional[dict]     # Raw tool output — passed between subgraph nodes
-                                      # (variance/anomaly/commentary flows)
+    formatted_table: Optional[str]   # markdown table(s) built from tool output
+    narrative: Optional[str]         # the answer text shown to the user
+    sources: list                    # document citations (Source model dicts)
+    sql_query: Optional[str]         # tool call(s) made, shown for transparency
+    tool_results: Optional[dict]     # raw tool output — passed between nodes, used by evals
 
     # ── Error ─────────────────────────────────────────────────────────────────
     error: Optional[str]

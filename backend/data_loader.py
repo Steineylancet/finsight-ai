@@ -108,3 +108,13 @@ class DataLoader:
 
     def fiscal_years(self) -> list[str]:
         return sorted(self.planning["Fiscal_Year"].unique().tolist())
+
+    def latest_actuals_period(self) -> tuple[str, str]:
+        """(fiscal_year, quarter) of the most recent quarter with any actuals booked."""
+        if not hasattr(self, "_latest_actuals"):
+            by_q = self.planning.groupby(["Fiscal_Year", "Quarter"])["Actuals_USD"].sum()
+            self._latest_actuals = max(by_q[by_q > 0].index)
+        return self._latest_actuals
+
+    def has_actuals(self, fiscal_year: str, quarter: str) -> bool:
+        return (fiscal_year, quarter) <= self.latest_actuals_period()

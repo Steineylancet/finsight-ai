@@ -1,70 +1,92 @@
 """
 FinSight AI — FastAPI Backend
-Entry point for the RAG chatbot API
+
+/chat   streams answers (SSE) from the LangGraph agent: document RAG, the SQL
+        agent and the three analytical flows all go through one graph.
+/agent  same graph, single JSON response — used by evals and scripts.
 """
 
-import logging
 import json
+import logging
 import os
+from contextlib import asynccontextmanager
+
 from fastapi import FastAPI, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import StreamingResponse, FileResponse
+from fastapi.responses import FileResponse, StreamingResponse
 from fastapi.staticfiles import StaticFiles
 from slowapi import Limiter, _rate_limit_exceeded_handler
-from slowapi.util import get_remote_address
 from slowapi.errors import RateLimitExceeded
+from slowapi.util import get_remote_address
 
-from backend.models import ChatRequest, ChatResponse, SearchRequest, HealthResponse, Source
-from backend.rag_pipeline import RAGPipeline
 from backend.data_loader import DataLoader
+from backend.graph.catalog import DEPARTMENTS
+from backend.graph.llm import FINAL_ANSWER_TAG
 from backend.graph.router import build_agent_graph
+from backend.models import ChatRequest, HealthResponse
+from backend.rag_pipeline import RAGPipeline
 
-# ── Logging ──────────────────────────────────────────────────────────────────
 logging.basicConfig(
     level=logging.INFO,
     format="%(asctime)s [%(levelname)s] %(name)s — %(message)s"
 )
 logger = logging.getLogger(__name__)
 
-# ── Rate Limiter ──────────────────────────────────────────────────────────────
+APP_VERSION = "3.0.0"
+GENERIC_ERROR = "Something went wrong answering that — please try again."
+
+rag_pipeline: RAGPipeline = None
+agent_graph = None
+
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    global rag_pipeline, agent_graph
+    logger.info("Initializing RAG pipeline...")
+    rag_pipeline = RAGPipeline()
+    logger.info("Loading financial data for the agentic layer...")
+    loader = DataLoader.get()
+    missing = set(loader.departments()) ^ set(DEPARTMENTS)
+    if missing:
+        logger.warning(f"Department catalog out of sync with data: {sorted(missing)}")
+    logger.info("Compiling LangGraph agent...")
+    agent_graph = build_agent_graph(rag_pipeline)
+    logger.info(f"FinSight AI v{APP_VERSION} is ready.")
+    yield
+
+
 limiter = Limiter(key_func=get_remote_address)
 
-# ── App ───────────────────────────────────────────────────────────────────────
 app = FastAPI(
     title="FinSight AI",
-    description="RAG-powered financial chatbot for Crestwood Capital Group",
-    version="1.0.0",
+    description="Agentic FP&A assistant for Crestwood Capital Group",
+    version=APP_VERSION,
+    lifespan=lifespan,
 )
-
 app.state.limiter = limiter
 app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  # Tighten in production
-    allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
+    allow_origins=["*"],
+    allow_credentials=False,
+    allow_methods=["GET", "POST"],
+    allow_headers=["Content-Type"],
 )
 
-# ── Static Files ──────────────────────────────────────────────────────────────
 _static_dir = os.path.join(os.path.dirname(__file__), "static")
 app.mount("/static", StaticFiles(directory=_static_dir), name="static")
 
-# ── Startup ───────────────────────────────────────────────────────────────────
-rag_pipeline: RAGPipeline = None
-agent_graph = None
 
-@app.on_event("startup")
-async def startup_event():
-    global rag_pipeline, agent_graph
-    logger.info("Initializing RAG pipeline...")
-    rag_pipeline = RAGPipeline()
-    logger.info("Loading financial data CSVs for agentic layer...")
-    DataLoader.get()  # Warm up singleton — loads once, reused by all tools
-    logger.info("Compiling LangGraph agent...")
-    agent_graph = build_agent_graph()
-    logger.info("FinSight AI v3 is ready.")
+def _initial_state(body: ChatRequest) -> dict:
+    return {
+        "query": body.question,
+        "conversation_history": [t.model_dump() for t in body.conversation_history],
+    }
+
+
+def _sse(payload) -> str:
+    return f"data: {json.dumps(payload, default=str)}\n\n"
 
 
 # ── Endpoints ─────────────────────────────────────────────────────────────────
@@ -76,127 +98,87 @@ async def root():
 
 @app.get("/health", response_model=HealthResponse)
 async def health():
-    return HealthResponse(
-        status="ok",
-        service="FinSight AI",
-        version="1.0.0"
-    )
+    return HealthResponse(status="ok", service="FinSight AI", version=APP_VERSION)
 
 
 @app.post("/chat")
 @limiter.limit("10/minute")
 async def chat(request: Request, body: ChatRequest):
     """
-    Main RAG chat endpoint. Streams GPT-4o response with sources.
+    Streams Server-Sent Events:
+      mode    {mode, intent}     which path answered (may be refined once)
+      sources {sources: [...]}   document citations
+      table   {content}          markdown table built from tool output
+      token   {content}          answer text, streamed
+      error   {message}          user-facing error
+      done    {sql_query}        tool calls made, for transparency
     """
-    try:
-        stream, sources = rag_pipeline.run(
-            question=body.question,
-            conversation_history=body.conversation_history,
-            stream=True,
-        )
+    state = _initial_state(body)
 
-        # If fallback string returned (no chunks found)
-        if isinstance(stream, str):
-            return ChatResponse(
-                answer=stream,
-                sources=[],
-                question=body.question,
-            )
-
-        # Serialize sources once
-        sources_payload = json.dumps([s.model_dump() for s in sources])
-
-        def generate():
-            # First chunk: send sources metadata
-            yield f"data: {json.dumps({'type': 'sources', 'sources': json.loads(sources_payload)})}\n\n"
-
-            # Stream GPT-4o response
-            for chunk in stream:
-                if not chunk.choices:
-                    continue
-                delta = chunk.choices[0].delta
-                if delta and delta.content:
-                    yield f"data: {json.dumps({'type': 'token', 'content': delta.content})}\n\n"
-
+    async def events():
+        final_state, streamed_text = {}, False
+        try:
+            async for namespace, mode, chunk in agent_graph.astream(
+                state, stream_mode=["messages", "custom", "values"], subgraphs=True
+            ):
+                if mode == "custom":
+                    streamed_text |= chunk.get("type") == "token"
+                    yield _sse(chunk)
+                elif mode == "messages":
+                    msg, meta = chunk
+                    if FINAL_ANSWER_TAG in (meta.get("tags") or []) and msg.content:
+                        streamed_text = True
+                        yield _sse({"type": "token", "content": msg.content})
+                elif mode == "values" and not namespace:
+                    final_state = chunk
+        except Exception as e:
+            logger.error(f"/chat stream failed: {e}", exc_info=True)
+            yield _sse({"type": "error", "message": GENERIC_ERROR})
             yield "data: [DONE]\n\n"
+            return
 
-        return StreamingResponse(generate(), media_type="text/event-stream")
+        if final_state.get("error"):
+            yield _sse({"type": "error", "message": final_state["error"]})
+        elif not streamed_text and final_state.get("narrative"):
+            yield _sse({"type": "token", "content": final_state["narrative"]})
+        yield _sse({"type": "done", "sql_query": final_state.get("sql_query")})
+        yield "data: [DONE]\n\n"
 
-    except Exception as e:
-        logger.error(f"Chat endpoint error: {e}", exc_info=True)
-        raise HTTPException(status_code=500, detail=f"Internal error: {str(e)}")
+    return StreamingResponse(events(), media_type="text/event-stream",
+                             headers={"Cache-Control": "no-cache", "X-Accel-Buffering": "no"})
 
 
 @app.post("/agent")
 @limiter.limit("10/minute")
 async def agent(request: Request, body: ChatRequest):
-    """
-    Agentic endpoint (v3). Classifies query intent and routes to:
-      - RAG pipeline (policy / document questions)
-      - SQL agent via LangChain tools + pandas DataFrames
-      - LangGraph analytical flows: variance_explainer, anomaly_scanner, commentary_drafter
-    Returns structured JSON (not streaming) with mode_label, table, narrative, sources.
-    """
+    """Same graph as /chat, returned as one JSON object."""
     try:
-        initial_state = {
-            "query": body.question,
-            "conversation_history": [t.model_dump() for t in body.conversation_history],
-            "intent": "",
-            "mode_label": "",
-            "department": None,
-            "fiscal_year": None,
-            "quarter": None,
-            "threshold_pct": None,
-            "min_amount": None,
-            "formatted_table": None,
-            "narrative": None,
-            "sources": [],
-            "sql_query": None,
-            "tool_results": None,
-            "error": None,
-        }
-
-        result = agent_graph.invoke(initial_state)
-
-        if result.get("error"):
-            return {
-                "mode": result.get("mode_label", "Error"),
-                "error": result["error"],
-                "table": None,
-                "narrative": None,
-                "sources": [],
-                "sql_query": None,
-            }
-
-        return {
-            "mode": result.get("mode_label", "SQL Query"),
-            "table": result.get("formatted_table"),
-            "narrative": result.get("narrative"),
-            "sources": result.get("sources", []),
-            "sql_query": result.get("sql_query"),
-            "error": None,
-        }
-
+        result = await agent_graph.ainvoke(_initial_state(body))
     except Exception as e:
-        logger.error(f"Agent endpoint error: {e}", exc_info=True)
-        raise HTTPException(status_code=500, detail=f"Agent error: {str(e)}")
+        logger.error(f"/agent failed: {e}", exc_info=True)
+        raise HTTPException(status_code=500, detail=GENERIC_ERROR)
+    return {
+        "mode": result.get("mode_label"),
+        "intent": result.get("intent"),
+        "standalone_query": result.get("standalone_query"),
+        "table": result.get("formatted_table"),
+        "narrative": result.get("narrative"),
+        "sources": result.get("sources") or [],
+        "sql_query": result.get("sql_query"),
+        "error": result.get("error"),
+    }
 
 
 @app.get("/search")
 @limiter.limit("20/minute")
 async def search(request: Request, q: str, top_k: int = 5):
-    """
-    Debug endpoint: run a raw hybrid search and return raw chunks.
-    """
+    """Debug endpoint: raw hybrid search results."""
     try:
         query_vector = rag_pipeline.openai_client.get_embedding(q)
         results = rag_pipeline.search_client.hybrid_search(
-            query_text=q,
-            query_vector=query_vector,
-            top_k=top_k,
+            query_text=q, query_vector=query_vector, top_k=min(max(top_k, 1), 20),
         )
         return {"query": q, "results": results}
     except Exception as e:
         logger.error(f"Search endpoint error: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise HTTPException(status_code=500, detail=GENERIC_ERROR)

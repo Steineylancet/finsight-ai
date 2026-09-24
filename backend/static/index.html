@@ -279,6 +279,48 @@
         #send-btn:hover { background: #388bfd; }
         #send-btn:disabled { background: #21262d; color: #484f58; cursor: not-allowed; }
 
+        /* ── Mode badge ── */
+        .mode-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 0.72rem;
+            font-weight: 600;
+            border-radius: 20px;
+            padding: 3px 10px;
+            margin-bottom: 8px;
+            border: 1px solid;
+        }
+        .mode-rag        { color: #58a6ff; background: rgba(88,166,255,0.1);  border-color: rgba(88,166,255,0.35); }
+        .mode-agent      { color: #3fb950; background: rgba(63,185,80,0.1);   border-color: rgba(63,185,80,0.35); }
+        .mode-variance   { color: #d29922; background: rgba(210,153,34,0.1);  border-color: rgba(210,153,34,0.35); }
+        .mode-anomaly    { color: #f85149; background: rgba(248,81,73,0.1);   border-color: rgba(248,81,73,0.35); }
+        .mode-commentary { color: #bc8cff; background: rgba(188,140,255,0.1); border-color: rgba(188,140,255,0.35); }
+
+        /* ── Data tables ── */
+        .table-wrap { overflow-x: auto; margin: 4px 0 10px; border: 1px solid #21262d; border-radius: 8px; }
+        .data-table { border-collapse: collapse; width: 100%; font-size: 0.8rem; font-variant-numeric: tabular-nums; }
+        .data-table th {
+            background: #0d1117; color: #8b949e; font-weight: 600; text-align: left;
+            padding: 7px 10px; border-bottom: 1px solid #30363d; white-space: nowrap;
+        }
+        .data-table td { padding: 6px 10px; border-bottom: 1px solid #21262d; color: #c9d1d9; white-space: nowrap; }
+        .data-table tr:last-child td { border-bottom: none; }
+        .data-table td.num, .data-table th.num { text-align: right; }
+        .data-table td.pos { color: #f0883e; }
+        .data-table td.neg { color: #3fb950; }
+
+        .bubble code { background: #0d1117; border-radius: 4px; padding: 1px 5px; font-size: 0.8rem; }
+        .bubble.error { border-color: rgba(248,81,73,0.4); }
+
+        .trace { margin-top: 8px; font-size: 0.75rem; color: #8b949e; }
+        .trace summary { cursor: pointer; }
+        .trace summary:hover { color: #58a6ff; }
+        .trace pre {
+            white-space: pre-wrap; word-break: break-all; background: #0d1117;
+            border: 1px solid #21262d; border-radius: 6px; padding: 8px; margin-top: 6px;
+        }
+
         /* ── Scrollbar ── */
         ::-webkit-scrollbar { width: 6px; }
         ::-webkit-scrollbar-track { background: transparent; }
@@ -299,30 +341,31 @@
     <div>
         <div class="sidebar-section-title">About</div>
         <div class="about-text">
-            Answers questions over <strong>Crestwood Capital Group's</strong> internal management documents —
-            quarterly department reviews, budget outlooks, expense policies, and vendor profiles —
-            powered by <span class="highlight">Azure OpenAI GPT-4o</span>
-            and <span class="highlight">Azure AI Search</span>.
+            An FP&amp;A assistant for <strong>Crestwood Capital Group</strong>. A
+            <span class="highlight">LangGraph</span> agent routes each question to document search,
+            live queries over 240K rows of planning and GL data, or an analytical flow —
+            and combines them when a question needs both.
         </div>
     </div>
 
     <hr class="divider" />
 
     <div>
-        <div class="sidebar-section-title">💡 Example Questions</div>
-        <button class="example-btn" onclick="prefill(this)">How did Software Engineering perform against budget in Q2 FY2025?</button>
-        <button class="example-btn" onclick="prefill(this)">What is the per diem rate for travel in APAC?</button>
+        <div class="sidebar-section-title">💡 Try asking</div>
+        <button class="example-btn" onclick="prefill(this)">Why did Software Engineering overspend in Q2 FY2025?</button>
+        <button class="example-btn" onclick="prefill(this)">Which departments were more than 10% over budget in Q3 FY2025?</button>
+        <button class="example-btn" onclick="prefill(this)">Draft the CFO commentary for Q1 FY2026</button>
+        <button class="example-btn" onclick="prefill(this)">Top 5 vendors by spend in Q1 FY2025</button>
+        <button class="example-btn" onclick="prefill(this)">Does the Cybersecurity variance in Q1 FY2025 need escalation under our budget guidelines?</button>
         <button class="example-btn" onclick="prefill(this)">Who approves a $30,000 software purchase?</button>
-        <button class="example-btn" onclick="prefill(this)">What is the outlook for IT Infrastructure spend in Q3 FY2026?</button>
-        <button class="example-btn" onclick="prefill(this)">What do we know about our relationship with Workday?</button>
-        <button class="example-btn" onclick="prefill(this)">What variance threshold triggers a CFO briefing?</button>
+        <button class="example-btn" onclick="prefill(this)">What is the per diem rate for travel in APAC?</button>
     </div>
 
     <hr class="divider" />
     <button class="clear-btn" onclick="clearChat()">🗑️ Clear Chat</button>
 
     <div class="sidebar-footer">
-        Azure OpenAI · Azure AI Search<br>FastAPI · Crestwood Capital Group
+        LangGraph · LangChain · Azure OpenAI<br>Azure AI Search · FastAPI
     </div>
 </div>
 
@@ -330,17 +373,16 @@
 <div id="main">
     <div id="hero">
         <h1>🏦 FinSight AI</h1>
-        <p>Ask anything about Crestwood Capital Group's management documents — quarterly reviews, budget outlooks, expense policies, and vendor profiles</p>
+        <p>Ask about budgets, actuals, variances, vendors and policies — FP&amp;A answers grounded in live data and internal documents</p>
     </div>
 
     <div id="stats">
-        <div class="chip">📝 Quarterly Reviews <span>65</span> memos</div>
-        <div class="chip">🔮 Budget Outlooks <span>39</span> memos</div>
-        <div class="chip">📋 Policies <span>8</span> docs</div>
-        <div class="chip">🤝 Vendor Profiles <span>10</span> docs</div>
-        <div class="chip">📅 Coverage <span>FY2025–FY2026</span></div>
-        <div class="chip">🔍 <span>Hybrid Vector + BM25</span></div>
-        <div class="chip">🤖 <span>GPT-4o</span></div>
+        <div class="chip">📊 Planning + GL <span>240K</span> rows</div>
+        <div class="chip">📅 Data <span>FY2022–FY2026</span></div>
+        <div class="chip">📄 Documents <span>122</span></div>
+        <div class="chip">🧭 Modes <span>RAG · SQL Agent · Variance · Anomaly · Commentary</span></div>
+        <div class="chip">🔍 <span>Vector + BM25 + Semantic rerank</span></div>
+        <div class="chip">🤖 <span>gpt-5.4-mini routing · GPT-4o answers</span></div>
     </div>
 
     <div id="chat-area"></div>
@@ -360,229 +402,241 @@
     const sendBtn  = document.getElementById('send-btn');
     let history = [];
 
-    function scrollBottom() {
-        chatArea.scrollTop = chatArea.scrollHeight;
-    }
+    const MODE_CLASS = { rag: 'mode-rag', agent: 'mode-agent', variance: 'mode-variance',
+                         anomaly: 'mode-anomaly', commentary: 'mode-commentary' };
+    const SOURCE_LABEL = { expense_policy: 'Policy', outlook_memo: 'Budget Outlook',
+                           vendor_profile: 'Vendor Profile', quarterly_memo: 'Quarterly Memo' };
+
+    function scrollBottom() { chatArea.scrollTop = chatArea.scrollHeight; }
 
     function handleKey(e) {
         if (e.key === 'Enter' && !e.shiftKey) {
             e.preventDefault();
-            document.getElementById('input-form').dispatchEvent(new Event('submit'));
+            document.getElementById('input-form').requestSubmit();
         }
     }
 
-    function prefill(btn) {
-        input.value = btn.textContent;
-        input.focus();
+    function prefill(btn) { input.value = btn.textContent; input.focus(); }
+
+    function clearChat() { chatArea.innerHTML = ''; history = []; }
+
+    // All model/tool output is escaped before any markup is added — the answer
+    // text is untrusted (it can echo retrieved documents or user input).
+    function escapeHtml(s) {
+        return String(s ?? '').replace(/[&<>"']/g, c => (
+            { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
     }
 
-    function clearChat() {
-        chatArea.innerHTML = '';
-        history = [];
+    function inline(s) {
+        return s
+            .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
+            .replace(/(^|[^*])\*(?!\s)(.+?)\*/g, '$1<em>$2</em>')
+            .replace(/`([^`]+)`/g, '<code>$1</code>');
     }
 
-    function addMessage(role, content, sources = []) {
+    function formatText(text) {
+        const lines = escapeHtml(text).split('\n');
+        const out = [];
+        let list = null, para = [];
+        const flushPara = () => { if (para.length) { out.push(`<p>${inline(para.join('<br>'))}</p>`); para = []; } };
+        const flushList = () => { if (list) { out.push(`<${list.tag}>${list.items.join('')}</${list.tag}>`); list = null; } };
+        for (const raw of lines) {
+            const line = raw.trim();
+            const bullet = line.match(/^[-•*]\s+(.*)/);
+            const numbered = line.match(/^\d+[.)]\s+(.*)/);
+            const heading = line.match(/^#{1,4}\s+(.*)/);
+            if (bullet || numbered) {
+                flushPara();
+                const tag = bullet ? 'ul' : 'ol';
+                if (!list || list.tag !== tag) { flushList(); list = { tag, items: [] }; }
+                list.items.push(`<li>${inline((bullet || numbered)[1])}</li>`);
+            } else if (heading) {
+                flushPara(); flushList();
+                out.push(`<p><strong>${inline(heading[1])}</strong></p>`);
+            } else if (!line) {
+                flushPara(); flushList();
+            } else {
+                flushList(); para.push(line);
+            }
+        }
+        flushPara(); flushList();
+        return out.join('');
+    }
+
+    function renderTable(md) {
+        const rows = md.trim().split('\n').filter(l => l.trim().startsWith('|'));
+        if (rows.length < 2) return null;
+        const cells = r => r.trim().replace(/^\||\|$/g, '').split('|').map(c => c.trim());
+        const header = cells(rows[0]);
+        const body = rows.slice(2).map(cells);
+        const isNum = v => /^[+\-]?\$?[\d,]+(\.\d+)?%?$/.test(v.replace(/\*\*/g, ''));
+        const numCol = header.map((_, i) => body.length && body.every(r => !r[i] || isNum(r[i])));
+
+        const table = document.createElement('table');
+        table.className = 'data-table';
+        const thead = table.createTHead().insertRow();
+        header.forEach((h, i) => {
+            const th = document.createElement('th');
+            th.innerHTML = inline(escapeHtml(h));
+            if (numCol[i]) th.classList.add('num');
+            thead.appendChild(th);
+        });
+        const tbody = table.createTBody();
+        body.forEach(r => {
+            const tr = tbody.insertRow();
+            header.forEach((h, i) => {
+                const td = tr.insertCell();
+                const v = r[i] ?? '';
+                td.innerHTML = inline(escapeHtml(v));
+                if (numCol[i]) td.classList.add('num');
+                const isVariance = /variance|^vs /i.test(h);
+                if (isVariance && /^\+/.test(v)) td.classList.add('pos');
+                if (isVariance && /^-/.test(v)) td.classList.add('neg');
+            });
+        });
+        const wrap = document.createElement('div');
+        wrap.className = 'table-wrap';
+        wrap.appendChild(table);
+        return wrap;
+    }
+
+    function renderSources(container, sources) {
+        if (!sources.length) return;
+        const toggle = document.createElement('button');
+        toggle.className = 'sources-toggle';
+        const panel = document.createElement('div');
+        panel.className = 'sources-panel';
+        const label = open => `📎 ${sources.length} source(s) ${open ? '▴' : '▾'}`;
+        toggle.textContent = label(false);
+        sources.forEach(src => {
+            const card = document.createElement('div');
+            card.className = 'source-card';
+            const period = src.fiscal_year ? ` | FY${escapeHtml(src.fiscal_year)} ${escapeHtml(src.fiscal_period)}` : '';
+            card.innerHTML = `
+                <span class="badge badge-plan">${escapeHtml(SOURCE_LABEL[src.data_type] || src.data_type)}</span>
+                <strong>${escapeHtml(src.title)}</strong>
+                <div class="meta">Dept: ${escapeHtml(src.department)}${period}</div>
+                <div class="preview">${escapeHtml(src.preview)}…</div>`;
+            panel.appendChild(card);
+        });
+        toggle.onclick = () => {
+            panel.classList.toggle('open');
+            toggle.textContent = label(panel.classList.contains('open'));
+        };
+        container.appendChild(toggle);
+        container.appendChild(panel);
+    }
+
+    function addMessage(role, content) {
         const wrap = document.createElement('div');
         wrap.className = `message ${role}`;
-
         const avatar = document.createElement('div');
         avatar.className = `avatar ${role === 'user' ? 'user-av' : 'bot-av'}`;
         avatar.textContent = role === 'user' ? '👤' : '🏦';
-
         const right = document.createElement('div');
         right.style.maxWidth = '760px';
-
+        right.style.minWidth = '0';
         const bubble = document.createElement('div');
         bubble.className = 'bubble';
-        bubble.innerHTML = formatText(content);
-
+        if (content !== undefined) bubble.innerHTML = formatText(content);
         right.appendChild(bubble);
-
-        if (sources.length > 0) {
-            const toggle = document.createElement('button');
-            toggle.className = 'sources-toggle';
-            toggle.innerHTML = `📎 ${sources.length} Source(s) Retrieved ▾`;
-
-            const panel = document.createElement('div');
-            panel.className = 'sources-panel';
-
-            sources.forEach(src => {
-                const card = document.createElement('div');
-                card.className = 'source-card';
-                const badgeClass = src.data_type === 'expense_policy' ? 'badge-gl' : src.data_type === 'outlook_memo' ? 'badge-revenue' : src.data_type === 'vendor_profile' ? 'badge-revenue' : 'badge-plan';
-                const badgeLabel = src.data_type === 'expense_policy' ? 'Policy' : src.data_type === 'outlook_memo' ? 'Budget Outlook' : src.data_type === 'vendor_profile' ? 'Vendor Profile' : 'Quarterly Memo';
-                card.innerHTML = `
-                    <span class="badge ${badgeClass}">${badgeLabel}</span>
-                    <strong>${src.title}</strong>
-                    <div class="meta">Entity: ${src.entity} &nbsp;|&nbsp; Dept: ${src.department} &nbsp;|&nbsp; FY${src.fiscal_year} P${src.fiscal_period}</div>
-                    <div class="preview">${src.preview}...</div>
-                `;
-                panel.appendChild(card);
-            });
-
-            toggle.onclick = () => {
-                panel.classList.toggle('open');
-                toggle.innerHTML = panel.classList.contains('open')
-                    ? `📎 ${sources.length} Source(s) Retrieved ▴`
-                    : `📎 ${sources.length} Source(s) Retrieved ▾`;
-            };
-
-            right.appendChild(toggle);
-            right.appendChild(panel);
-        }
-
         wrap.appendChild(avatar);
         wrap.appendChild(right);
         chatArea.appendChild(wrap);
         scrollBottom();
-        return bubble;
+        return { bubble, right };
     }
 
-    function addTyping() {
-        const wrap = document.createElement('div');
-        wrap.className = 'message bot';
-        wrap.id = 'typing-indicator';
-
-        const avatar = document.createElement('div');
-        avatar.className = 'avatar bot-av';
-        avatar.textContent = '🏦';
-
-        const bubble = document.createElement('div');
-        bubble.className = 'bubble';
-        bubble.innerHTML = '<div class="typing"><span></span><span></span><span></span></div>';
-
-        wrap.appendChild(avatar);
-        wrap.appendChild(bubble);
-        chatArea.appendChild(wrap);
-        scrollBottom();
-        return wrap;
-    }
-
-    function formatText(text) {
-        return text
-            .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
-            .replace(/\*(.*?)\*/g, '<em>$1</em>')
-            .replace(/^#{1,3}\s(.+)/gm, '<strong>$1</strong>')
-            .replace(/^[-•]\s(.+)/gm, '<li>$1</li>')
-            .replace(/(<li>.*<\/li>)/s, '<ul>$1</ul>')
-            .split('\n\n').map(p => p.trim() ? `<p>${p}</p>` : '').join('');
+    function botResponseView() {
+        const { bubble, right } = addMessage('bot');
+        const badge = document.createElement('div');
+        badge.className = 'mode-badge';
+        badge.hidden = true;
+        const tables = document.createElement('div');
+        const text = document.createElement('div');
+        text.innerHTML = '<div class="typing"><span></span><span></span><span></span></div>';
+        bubble.append(badge, tables, text);
+        return { bubble, right, badge, tables, text };
     }
 
     async function sendMessage(e) {
         e.preventDefault();
         const question = input.value.trim();
-        if (!question) return;
+        if (!question || sendBtn.disabled) return;
 
         input.value = '';
         sendBtn.disabled = true;
-
         addMessage('user', question);
-        history.push({ role: 'user', content: question });
 
-        const typingEl = addTyping();
-
-        let fullResponse = '';
-        let sources = [];
-        let botBubble = null;
+        const view = botResponseView();
+        let answer = '', sources = [], sqlQuery = null, errorMsg = null;
 
         try {
             const resp = await fetch('/chat', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    question,
-                    conversation_history: history.slice(-10)
-                })
+                body: JSON.stringify({ question, conversation_history: history.slice(-10) }),
             });
-
-            if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
+            if (resp.status === 429) throw new Error('Rate limit reached — please wait a minute and try again.');
+            if (!resp.ok) throw new Error(`Request failed (HTTP ${resp.status}).`);
 
             const reader = resp.body.getReader();
             const decoder = new TextDecoder();
             let buffer = '';
-
-            typingEl.remove();
-            const wrap = document.createElement('div');
-            wrap.className = 'message bot';
-            const avatar = document.createElement('div');
-            avatar.className = 'avatar bot-av';
-            avatar.textContent = '🏦';
-            const right = document.createElement('div');
-            right.style.maxWidth = '760px';
-            botBubble = document.createElement('div');
-            botBubble.className = 'bubble';
-            right.appendChild(botBubble);
-            wrap.appendChild(avatar);
-            wrap.appendChild(right);
-            chatArea.appendChild(wrap);
-
-            while (true) {
+            outer: while (true) {
                 const { done, value } = await reader.read();
                 if (done) break;
-
                 buffer += decoder.decode(value, { stream: true });
-                const lines = buffer.split('\n');
-                buffer = lines.pop();
-
-                for (const line of lines) {
-                    if (!line.startsWith('data: ')) continue;
-                    const data_str = line.slice(6);
-                    if (data_str === '[DONE]') break;
-                    try {
-                        const data = JSON.parse(data_str);
-                        if (data.type === 'sources') {
-                            sources = data.sources;
-                        } else if (data.type === 'token') {
-                            fullResponse += data.content;
-                            botBubble.innerHTML = formatText(fullResponse) + '<span style="opacity:0.5">▌</span>';
-                            scrollBottom();
-                        }
-                    } catch {}
+                const events = buffer.split('\n\n');
+                buffer = events.pop();
+                for (const ev of events) {
+                    if (!ev.startsWith('data: ')) continue;
+                    const payload = ev.slice(6);
+                    if (payload === '[DONE]') break outer;
+                    let data;
+                    try { data = JSON.parse(payload); } catch { continue; }
+                    if (data.type === 'mode') {
+                        view.badge.hidden = false;
+                        view.badge.className = `mode-badge ${MODE_CLASS[data.intent] || 'mode-agent'}`;
+                        view.badge.textContent = data.mode;
+                    } else if (data.type === 'table') {
+                        const t = renderTable(data.content);
+                        if (t) view.tables.appendChild(t);
+                    } else if (data.type === 'sources') {
+                        sources = data.sources || [];
+                    } else if (data.type === 'token') {
+                        answer += data.content;
+                        view.text.innerHTML = formatText(answer) + '<span style="opacity:0.5">▌</span>';
+                    } else if (data.type === 'error') {
+                        errorMsg = data.message;
+                    } else if (data.type === 'done') {
+                        sqlQuery = data.sql_query;
+                    }
+                    scrollBottom();
                 }
             }
-
-            botBubble.innerHTML = formatText(fullResponse);
-
-            if (sources.length > 0) {
-                const toggle = document.createElement('button');
-                toggle.className = 'sources-toggle';
-                toggle.innerHTML = `📎 ${sources.length} Source(s) Retrieved ▾`;
-
-                const panel = document.createElement('div');
-                panel.className = 'sources-panel';
-
-                sources.forEach(src => {
-                    const card = document.createElement('div');
-                    card.className = 'source-card';
-                    const badgeClass = src.data_type === 'gl_transaction' ? 'badge-gl' : 'badge-plan';
-                    const badgeLabel = src.data_type === 'gl_transaction' ? 'GL Transaction' : 'Planning Data';
-                    card.innerHTML = `
-                        <span class="badge ${badgeClass}">${badgeLabel}</span>
-                        <strong>${src.title}</strong>
-                        <div class="meta">Entity: ${src.entity} &nbsp;|&nbsp; Dept: ${src.department} &nbsp;|&nbsp; FY${src.fiscal_year} P${src.fiscal_period}</div>
-                        <div class="preview">${src.preview}...</div>
-                    `;
-                    panel.appendChild(card);
-                });
-
-                toggle.onclick = () => {
-                    panel.classList.toggle('open');
-                    toggle.innerHTML = panel.classList.contains('open')
-                        ? `📎 ${sources.length} Source(s) Retrieved ▴`
-                        : `📎 ${sources.length} Source(s) Retrieved ▾`;
-                };
-
-                right.appendChild(toggle);
-                right.appendChild(panel);
-            }
-
         } catch (err) {
-            typingEl.remove();
-            addMessage('bot', `⚠️ Error: ${err.message}`);
+            errorMsg = err.message;
         }
 
-        history.push({ role: 'assistant', content: fullResponse });
+        if (errorMsg && !answer) {
+            view.bubble.classList.add('error');
+            view.text.innerHTML = formatText(`⚠️ ${errorMsg}`);
+        } else {
+            view.text.innerHTML = formatText(answer);
+        }
+        renderSources(view.right, sources);
+        if (sqlQuery) {
+            const trace = document.createElement('details');
+            trace.className = 'trace';
+            trace.innerHTML = `<summary>🔧 Tool calls</summary><pre>${escapeHtml(sqlQuery.split('; ').join('\n'))}</pre>`;
+            view.right.appendChild(trace);
+        }
+
+        history.push({ role: 'user', content: question });
+        history.push({ role: 'assistant', content: answer || errorMsg || '' });
         sendBtn.disabled = false;
+        input.focus();
         scrollBottom();
     }
 </script>

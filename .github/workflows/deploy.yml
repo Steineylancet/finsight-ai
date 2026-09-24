@@ -76,6 +76,9 @@ jobs:
               AZURE_SEARCH_INDEX_NAME="finsight-index" \
               AZURE_STORAGE_CONNECTION_STRING="${{ secrets.AZURE_STORAGE_CONNECTION_STRING }}" \
               AZURE_STORAGE_CONTAINER_NAME="financial-data" \
+              LANGSMITH_TRACING="${{ secrets.LANGSMITH_API_KEY != '' }}" \
+              LANGSMITH_API_KEY="${{ secrets.LANGSMITH_API_KEY }}" \
+              LANGSMITH_PROJECT="finsight" \
             --output none
 
       - name: Zip app for deployment

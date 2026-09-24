@@ -1,0 +1,919 @@
+{
+  "run_at": "2026-09-24T15:40:51",
+  "metrics": {
+    "routing": {
+      "score": 1.0,
+      "n": 33,
+      "gate": 0.9
+    },
+    "parameters": {
+      "score": 1.0,
+      "n": 46,
+      "gate": 0.9
+    },
+    "behaviour": {
+      "score": 1.0,
+      "n": 26,
+      "gate": 0.9
+    },
+    "grounding": {
+      "score": 1.0,
+      "n": 183,
+      "gate": 0.95
+    },
+    "faithfulness": {
+      "score": 4.870967741935484,
+      "n": 31,
+      "gate": 4.0
+    }
+  },
+  "passed": true,
+  "cases": [
+    {
+      "id": "rag-per-diem",
+      "category": "rag",
+      "question": "What is the per diem rate for travel in APAC?",
+      "intent": "rag",
+      "mode": "Document Q&A (RAG)",
+      "standalone_query": "What is the per diem rate for travel in APAC?",
+      "tools": [],
+      "checks": {
+        "routing": true,
+        "behaviour:contains": true
+      },
+      "grounding": [
+        1,
+        1
+      ],
+      "unsupported_figures": [],
+      "faithfulness": 5,
+      "unsupported_claims": [],
+      "latency_s": 7.5,
+      "error": null,
+      "narrative": "Per the **Travel & Entertainment (T&E) Policy**, the per diem rate for travel in APAC (Singapore and Australia) is **$90/day** for meals and incidentals."
+    },
+    {
+      "id": "rag-software-approval",
+      "category": "rag",
+      "question": "Who needs to approve a $30,000 software purchase?",
+      "intent": "rag",
+      "mode": "Document Q&A (RAG)",
+      "standalone_query": "Who needs to approve a $30,000 software purchase?",
+      "tools": [],
+      "checks": {
+        "routing": true,
+        "behaviour:contains": true
+      },
+      "grounding": [
+        3,
+        3
+      ],
+      "unsupported_figures": [],
+      "faithfulness": 4,
+      "unsupported_claims": [
+        "Additionally, an IT Security review is required as part of the process."
+      ],
+      "latency_s": 6.3,
+      "error": null,
+      "narrative": "According to the **Software & Cloud Procurement Policy**, a $30,000 software purchase falls into the **$25,000\u2013$100,000** range. This requires approval from the **VP Technology** and the **Finance Business Partner**. Additionally, an **IT Security review** is required as part of the process."
+    },
+    {
+      "id": "rag-cfo-threshold",
+      "category": "rag",
+      "question": "What variance percentage triggers a CFO briefing?",
+      "intent": "rag",
+      "mode": "Document Q&A (RAG)",
+      "standalone_query": "What variance percentage triggers a CFO briefing?",
+      "tools": [],
+      "checks": {
+        "routing": true,
+        "behaviour:contains": true
+      },
+      "grounding": [
+        1,
+        1
+      ],
+      "unsupported_figures": [],
+      "faithfulness": 5,
+      "unsupported_claims": [],
+      "latency_s": 4.7,
+      "error": null,
+      "narrative": "According to the **Budget Planning & Forecasting Guidelines**, a variance percentage exceeding **20%** (whether favorable or unfavorable) triggers a **CFO briefing**."
+    },
+    {
+      "id": "rag-workday",
+      "category": "rag",
+      "question": "What do our documents say about the relationship with Workday?",
+      "intent": "rag",
+      "mode": "Document Q&A (RAG)",
+      "standalone_query": "What do our documents say about the relationship with Workday?",
+      "tools": [],
+      "checks": {
+        "routing": true,
+        "behaviour:contains": true
+      },
+      "grounding": [
+        2,
+        2
+      ],
+      "unsupported_figures": [],
+      "faithfulness": 5,
+      "unsupported_claims": [],
+      "latency_s": 5.7,
+      "error": null,
+      "narrative": "According to the Vendor Profile for Workday Inc., Crestwood's relationship with Workday is classified as \"Strategic,\" with strong alignment on long-term goals. The current contract runs through December 2028, with annual renewal options thereafter. The agreement includes a 3% annual cost cap on subscription fees and a 99.9% uptime SLA for critical services. Workday provides quarterly business reviews and a dedicated account management team. In FY2025, Workday collaborated with Crestwood on a successful rollout of advanced workforce analytics in the APAC region."
+    },
+    {
+      "id": "rag-prof-services",
+      "category": "rag",
+      "question": "What are the requirements for engaging a professional services firm?",
+      "intent": "rag",
+      "mode": "Document Q&A (RAG)",
+      "standalone_query": "What are the requirements for engaging a professional services firm?",
+      "tools": [],
+      "checks": {
+        "routing": true,
+        "behaviour:contains": true
+      },
+      "grounding": [
+        15,
+        15
+      ],
+      "unsupported_figures": [],
+      "faithfulness": 5,
+      "unsupported_claims": [],
+      "latency_s": 9.1,
+      "error": null,
+      "narrative": "Engaging a professional services firm at Crestwood Capital Group requires adherence to the following guidelines, as outlined in the *Professional Services Engagement Policy*:\n\n1. **Engagement Value Approval Process**:\n   - **Under $10,000**: Requires manager approval and a purchase order.\n   - **$10,000 \u2013 $50,000**: Requires director approval and a signed Statement of Work (SOW).\n   - **$50,000 \u2013 $200,000**: Requires VP approval, Finance sign-off, and a signed SOW.\n   - **Over $200,000**: Requires C-Suite approval, Legal review, Finance sign-off, and a signed SOW.\n\n2. **Statement of Work (SOW) Requirements**:\n   For engagements over $10,000, a signed SOW must include:\n   - Clear scope of work and deliverables.\n   - Fixed timeline with milestones.\n   - Rate card or fixed fee structure.\n   - Intellectual property ownership clause.\n   - Termination clause (maximum 30-day notice for time-and-materials agreements).\n\n3. **Rate Card Benchmarks**:\n   - Consultant daily rates must align with the following benchmarks:\n     - Junior Analyst: $800\u2013$1,200\n     - Senior Consultant: $1,500\u2013$2,200\n     - Manager/Principal: $2,500\u2013$3,500\n     - Partner/Director: $4,000\u2013$6,000\n   - Rates exceeding these benchmarks require CFO approval and documented justification.\n\n4. **Preferred Firms**:\n   Crestwood Capital Group has preferred engagements with the following firms:\n   - Deloitte (audit)\n   - PwC (tax advisory)\n   - Kirkland & Ellis (M&A legal)\n   - Korn Ferry (executive search)\n\n5. **Definition of Professional Services**:\n   Professional services include management consulting, legal advisory, audit and assurance, tax advisory, IT consulting, recruitment (contingency and retained), and financial advisory services.\n\nThese requirements ensure proper oversight, cost control, and alignment with company policies."
+    },
+    {
+      "id": "rag-reforecast",
+      "category": "rag",
+      "question": "How often do we reforecast?",
+      "intent": "rag",
+      "mode": "Document Q&A (RAG)",
+      "standalone_query": "How often do we reforecast?",
+      "tools": [],
+      "checks": {
+        "routing": true
+      },
+      "grounding": [
+        1,
+        1
+      ],
+      "unsupported_figures": [],
+      "faithfulness": 5,
+      "unsupported_claims": [],
+      "latency_s": 5.4,
+      "error": null,
+      "narrative": "Per the **Budget Planning & Forecasting Guidelines**, Crestwood Capital Group maintains a rolling quarterly forecast (Q+3 outlook), and reforecasts are submitted **two weeks after each quarter close**. Additionally, departments must reforecast if actual spend diverges from the budget by more than **10% in any expense category**."
+    },
+    {
+      "id": "rag-team-meals",
+      "category": "rag",
+      "question": "What's the spending limit per person for internal team meals?",
+      "intent": "rag",
+      "mode": "Document Q&A (RAG)",
+      "standalone_query": "What is the spending limit per person for internal team meals?",
+      "tools": [],
+      "checks": {
+        "routing": true,
+        "behaviour:contains": true
+      },
+      "grounding": [
+        1,
+        1
+      ],
+      "unsupported_figures": [],
+      "faithfulness": 5,
+      "unsupported_claims": [],
+      "latency_s": 5.2,
+      "error": null,
+      "narrative": "Per the **Travel & Entertainment (T&E) Policy**, the spending limit for internal team meals is **$50 per person**, provided there is a clear business purpose."
+    },
+    {
+      "id": "var-swe",
+      "category": "variance",
+      "question": "Why did Software Engineering overspend in Q2 FY2025?",
+      "intent": "variance",
+      "mode": "Variance Explainer",
+      "standalone_query": "Why did Software Engineering overspend in Q2 FY2025?",
+      "tools": [
+        "get_variance_breakdown"
+      ],
+      "checks": {
+        "routing": true,
+        "param:department": true,
+        "param:fiscal_year": true,
+        "param:quarter": true,
+        "behaviour:contains": true
+      },
+      "grounding": [
+        10,
+        10
+      ],
+      "unsupported_figures": [],
+      "faithfulness": 5,
+      "unsupported_claims": [],
+      "latency_s": 5.9,
+      "error": null,
+      "narrative": "The Software Engineering budget for Q2 FY2025 shows a total unfavorable variance of +$4,959,403 (+42.6%), with actuals of $16,609,226 compared to a budget of $11,649,823. Key drivers include People Costs (+$3,120,593, +41.2%), Technology (+$993,717, +42.6%), and Professional Services (+$456,999, +49.1%). Further analysis is needed to determine the specific reasons for the overages in each category."
+    },
+    {
+      "id": "var-hr",
+      "category": "variance",
+      "question": "What drove the variance in Human Resources for Q3 FY2024?",
+      "intent": "variance",
+      "mode": "Variance Explainer",
+      "standalone_query": "What drove the variance in Human Resources for Q3 FY2024?",
+      "tools": [
+        "get_variance_breakdown"
+      ],
+      "checks": {
+        "routing": true,
+        "param:department": true,
+        "param:fiscal_year": true,
+        "param:quarter": true
+      },
+      "grounding": [
+        10,
+        10
+      ],
+      "unsupported_figures": [],
+      "faithfulness": 5,
+      "unsupported_claims": [],
+      "latency_s": 4.7,
+      "error": null,
+      "narrative": "The Human Resources budget for Q3 FY2024 shows a total unfavorable variance of $+13,271 (+2.6%), with actuals of $524,030 exceeding the budget of $510,759. Key drivers include Technology ($+6,064, +7.9%), Travel & Expense ($+3,301, +6.5%), and Facilities & Occupancy ($+3,098, +6.1%). Further detail is needed to confirm the specific reasons for these overages."
+    },
+    {
+      "id": "var-legal",
+      "category": "variance",
+      "question": "Explain why Legal was over budget in Q1 FY2025",
+      "intent": "variance",
+      "mode": "Variance Explainer",
+      "standalone_query": "Explain why Legal was over budget in Q1 FY2025.",
+      "tools": [
+        "get_variance_breakdown"
+      ],
+      "checks": {
+        "routing": true,
+        "param:department": true,
+        "param:fiscal_year": true,
+        "param:quarter": true
+      },
+      "grounding": [
+        16,
+        16
+      ],
+      "unsupported_figures": [],
+      "faithfulness": 5,
+      "unsupported_claims": [],
+      "latency_s": 5.5,
+      "error": null,
+      "narrative": "The Legal department's Q1 FY2025 budget variance is $+188,502 (+43.3%), with total actuals of $623,517 against a budget of $435,016. Key drivers include People Costs at $321,751, exceeding the budget of $217,771 by $+103,980 (+47.7%); Professional Services at $208,628, over the budget of $152,495 by $+56,133 (+36.8%); and Travel & Expense at $43,912, surpassing the budget of $30,107 by $+13,805 (+45.9%). Further analysis is required to determine the specific reasons for these overages."
+    },
+    {
+      "id": "var-relative-year",
+      "category": "variance",
+      "question": "Why was IT so far over plan in Q4 last year?",
+      "intent": "variance",
+      "mode": "Variance Explainer",
+      "standalone_query": "Why was IT Infrastructure so far over plan in Q4 FY2025?",
+      "tools": [
+        "get_variance_breakdown"
+      ],
+      "checks": {
+        "routing": true,
+        "param:department": true,
+        "param:fiscal_year": true,
+        "param:quarter": true
+      },
+      "grounding": [
+        9,
+        9
+      ],
+      "unsupported_figures": [],
+      "faithfulness": 5,
+      "unsupported_claims": [],
+      "latency_s": 5.2,
+      "error": null,
+      "narrative": "The IT Infrastructure budget for Q4 FY2025 shows a total unfavorable variance of -$6,635,443 (-100.0%) due to no actual spending against the budgeted $6,635,443. Key drivers include Technology (-$2,981,703, -100.0%), People Costs (-$2,315,133, -100.0%), and Professional Services (-$801,432, -100.0%). Further analysis is required to determine the reasons for the lack of expenditure."
+    },
+    {
+      "id": "var-dna",
+      "category": "variance",
+      "question": "Break down the budget variance for Data & Analytics in Q2 FY2023",
+      "intent": "variance",
+      "mode": "Variance Explainer",
+      "standalone_query": "Break down the budget variance for Data & Analytics in Q2 FY2023",
+      "tools": [
+        "get_variance_breakdown"
+      ],
+      "checks": {
+        "routing": true,
+        "param:department": true,
+        "param:fiscal_year": true,
+        "param:quarter": true
+      },
+      "grounding": [
+        10,
+        10
+      ],
+      "unsupported_figures": [],
+      "faithfulness": 5,
+      "unsupported_claims": [],
+      "latency_s": 5.8,
+      "error": null,
+      "narrative": "The Data & Analytics budget for Q2 FY2023 shows a total unfavorable variance of +$124,423 (+4.2%), with actuals at $3,100,553 against a budget of $2,976,130. Key drivers include People Costs at +$59,408 (+3.3%), Technology at +$49,149 (+6.6%), and Professional Services at +$9,177 (+3.1%). Further detail is needed to confirm the specific causes of these variances."
+    },
+    {
+      "id": "anom-q2-2024",
+      "category": "anomaly",
+      "question": "Which departments were more than 10% over budget in Q2 FY2024?",
+      "intent": "anomaly",
+      "mode": "Anomaly Scan",
+      "standalone_query": "Which departments were more than 10% over budget in Q2 FY2024?",
+      "tools": [
+        "get_anomalies"
+      ],
+      "checks": {
+        "routing": true,
+        "param:fiscal_year": true,
+        "param:quarter": true,
+        "behaviour:tools": true
+      },
+      "grounding": [
+        2,
+        2
+      ],
+      "unsupported_figures": [],
+      "faithfulness": 5,
+      "unsupported_claims": [],
+      "latency_s": 2.1,
+      "error": null,
+      "narrative": "No departments breached the thresholds in Q2 FY2024 (|variance| \u2265 10% and \u2265 $10,000). All 26 departments are within tolerance."
+    },
+    {
+      "id": "anom-threshold",
+      "category": "anomaly",
+      "question": "Flag any cost centres with variance above 25% in Q1 FY2025",
+      "intent": "anomaly",
+      "mode": "Anomaly Scan",
+      "standalone_query": "Flag any cost centres with variance above 25% in Q1 FY2025",
+      "tools": [
+        "get_anomalies"
+      ],
+      "checks": {
+        "routing": true,
+        "param:fiscal_year": true,
+        "param:quarter": true,
+        "param:threshold_pct": true
+      },
+      "grounding": [
+        4,
+        4
+      ],
+      "unsupported_figures": [],
+      "faithfulness": 5,
+      "unsupported_claims": [],
+      "latency_s": 5.3,
+      "error": null,
+      "narrative": "The pattern appears systemic, with 23 of 26 departments breaching thresholds (|variance| \u2265 25% and \u2265 $10,000) in Q1 FY2025, all over budget. The largest variance was Software Engineering at $+4,270,789 (+42.3%)."
+    },
+    {
+      "id": "anom-latest",
+      "category": "anomaly",
+      "question": "Any budget anomalies in the latest quarter?",
+      "intent": "anomaly",
+      "mode": "Anomaly Scan",
+      "standalone_query": "Which departments had budget anomalies in the latest quarter (Q1 FY2026)?",
+      "tools": [
+        "get_anomalies"
+      ],
+      "checks": {
+        "routing": true,
+        "param:fiscal_year": true,
+        "param:quarter": true
+      },
+      "grounding": [
+        2,
+        2
+      ],
+      "unsupported_figures": [],
+      "faithfulness": 5,
+      "unsupported_claims": [],
+      "latency_s": 4.3,
+      "error": null,
+      "narrative": "The pattern appears systemic, with all 26 of 26 departments breaching thresholds in Q1 FY2026, all over budget. The largest variance was Sales - Americas at $+7,858,250 (+13.3%)."
+    },
+    {
+      "id": "anom-blew-budget",
+      "category": "anomaly",
+      "question": "Which teams blew their budget in Q3 FY2023?",
+      "intent": "anomaly",
+      "mode": "Anomaly Scan",
+      "standalone_query": "Which departments were over budget in Q3 FY2023?",
+      "tools": [
+        "get_anomalies"
+      ],
+      "checks": {
+        "routing": true,
+        "param:fiscal_year": true,
+        "param:quarter": true
+      },
+      "grounding": [
+        2,
+        2
+      ],
+      "unsupported_figures": [],
+      "faithfulness": 5,
+      "unsupported_claims": [],
+      "latency_s": 1.8,
+      "error": null,
+      "narrative": "No departments breached the thresholds in Q3 FY2023 (|variance| \u2265 10% and \u2265 $10,000). All 26 departments are within tolerance."
+    },
+    {
+      "id": "com-q2-2025",
+      "category": "commentary",
+      "question": "Draft the CFO commentary for Q2 FY2025",
+      "intent": "commentary",
+      "mode": "Commentary Draft",
+      "standalone_query": "Draft the CFO commentary for Q2 FY2025.",
+      "tools": [
+        "get_anomalies"
+      ],
+      "checks": {
+        "routing": true,
+        "param:fiscal_year": true,
+        "param:quarter": true,
+        "behaviour:contains": true
+      },
+      "grounding": [
+        17,
+        17
+      ],
+      "unsupported_figures": [],
+      "faithfulness": 4,
+      "unsupported_claims": [
+        "The variance reflects a broad-based trend of higher-than-anticipated spending across the organization.",
+        "Additionally, the sustained variance in Software Engineering expenses suggests the need for further scrutiny to ensure alignment with strategic priorities.",
+        "FP&A will collaborate with department heads to identify root causes and recommend corrective actions to mitigate risks to future quarters."
+      ],
+      "latency_s": 12.6,
+      "error": null,
+      "narrative": "**\u26a0\ufe0f DRAFT \u2014 review and edit before distributing**\n\nOperating expenses for Q2 FY2025 totaled $300.9 million, exceeding the budget of $251.8 million by $49.1 million, or 19.5%. This represents an unfavorable variance, with all 26 departments reporting actuals more than 5% over budget. The variance reflects a broad-based trend of higher-than-anticipated spending across the organization.\n\nKey contributors to the variance include Sales - Americas, Sales - APAC, and Software Engineering. Sales - Americas reported actuals of $76.1 million against a budget of $70.1 million, resulting in a variance of $6.0 million (+8.5%). Sales - APAC recorded $60.3 million in actuals versus a budget of $55.0 million, a variance of $5.3 million (+9.7%). Software Engineering showed the most significant percentage variance, with actuals of $16.6 million compared to a budget of $11.6 million, exceeding budget by $5.0 million (+42.6%).\n\nGiven the broad overages, a deeper review of cost drivers across all departments is warranted, with particular attention to those with double-digit percentage variances. Additionally, the sustained variance in Software Engineering expenses suggests the need for further scrutiny to ensure alignment with strategic priorities. FP&A will collaborate with department heads to identify root causes and recommend corrective actions to mitigate risks to future quarters.\n\n*AI-generated draft. Verify all figures against the table before use.*"
+    },
+    {
+      "id": "com-board",
+      "category": "commentary",
+      "question": "Write the board narrative on operating expenses for Q4 FY2023",
+      "intent": "commentary",
+      "mode": "Commentary Draft",
+      "standalone_query": "Write the board narrative on operating expenses for Q4 FY2023",
+      "tools": [
+        "get_anomalies"
+      ],
+      "checks": {
+        "routing": true,
+        "param:fiscal_year": true,
+        "param:quarter": true
+      },
+      "grounding": [
+        17,
+        17
+      ],
+      "unsupported_figures": [],
+      "faithfulness": 4,
+      "unsupported_claims": [
+        "This variance represents an unfavorable result relative to plan, driven by higher-than-expected spending in a subset of departments.",
+        "These departments contributed meaningfully to the overall overspend and should be prioritized for variance analysis.",
+        "A deeper review of expense planning and forecasting processes may also be warranted to strengthen future performance."
+      ],
+      "latency_s": 8.2,
+      "error": null,
+      "narrative": "**\u26a0\ufe0f DRAFT \u2014 review and edit before distributing**\n\nFor Q4 FY2023, operating expenses totaled $262.7 million, exceeding the budget of $252.5 million by $10.2 million, or 4.0%. This variance represents an unfavorable result relative to plan, driven by higher-than-expected spending in a subset of departments. While most areas remained within acceptable thresholds, three out of 26 departments recorded variances exceeding 5%, warranting further review.\n\nMarketing - APAC reported actuals of $6.1 million against a budget of $5.8 million, resulting in a $325,679 variance (+5.6%). Facilities & Real Estate incurred expenses of $4.4 million versus a budget of $4.2 million, reflecting a $213,691 variance (+5.1%). Additionally, Customer Success - EMEA recorded $1.8 million in actuals compared to a $1.7 million budget, creating a $103,608 variance (+6.3%). These departments contributed meaningfully to the overall overspend and should be prioritized for variance analysis.\n\nAs we close the quarter, attention should focus on identifying the underlying drivers of these variances, particularly in the highlighted departments, to ensure alignment with budgetary controls. Further, continued monitoring of expense trends across all departments will be critical to mitigate risks of recurring variances. A deeper review of expense planning and forecasting processes may also be warranted to strengthen future performance.\n\n*AI-generated draft. Verify all figures against the table before use.*"
+    },
+    {
+      "id": "com-q1-2026",
+      "category": "commentary",
+      "question": "Prepare management commentary for Q1 FY2026",
+      "intent": "commentary",
+      "mode": "Commentary Draft",
+      "standalone_query": "Prepare management commentary for Q1 FY2026",
+      "tools": [
+        "get_anomalies"
+      ],
+      "checks": {
+        "routing": true,
+        "param:fiscal_year": true,
+        "param:quarter": true
+      },
+      "grounding": [
+        17,
+        17
+      ],
+      "unsupported_figures": [],
+      "faithfulness": 4,
+      "unsupported_claims": [
+        "This unfavorable variance was driven by higher-than-expected spending across all 26 departments, each exceeding budget by more than 5%.",
+        "The broad nature of the variance underscores the need for closer scrutiny of cost drivers and budget adherence across the organization.",
+        "These departments collectively represent a material portion of the overall variance and warrant further analysis.",
+        "Given the pervasive nature of the overspend, immediate attention should focus on identifying root causes and assessing whether variances are structural or one-time in nature.",
+        "Enhanced monitoring of departmental spending and a review of budget assumptions are recommended to mitigate risks in upcoming quarters.",
+        "Additionally, deeper engagement with department leaders will be critical to ensure alignment on cost management priorities."
+      ],
+      "latency_s": 9.8,
+      "error": null,
+      "narrative": "**\u26a0\ufe0f DRAFT \u2014 review and edit before distributing**\n\nOperating expenses for Q1 FY2026 totaled $270.4M, exceeding the budget of $221.0M by $49.4M, or 22.3%. This unfavorable variance was driven by higher-than-expected spending across all 26 departments, each exceeding budget by more than 5%. The broad nature of the variance underscores the need for closer scrutiny of cost drivers and budget adherence across the organization.\n\nKey contributors to the variance include Sales - Americas, which reported actuals of $66.9M against a budget of $59.0M, resulting in a $7.9M overage (+13.3%). Similarly, Sales - APAC incurred $52.9M in expenses, exceeding its $47.6M budget by $5.3M (+11.2%). Software Engineering also saw significant budgetary pressure, with actuals of $15.7M compared to a budget of $10.8M, reflecting a $4.9M variance (+45.0%). These departments collectively represent a material portion of the overall variance and warrant further analysis.\n\nGiven the pervasive nature of the overspend, immediate attention should focus on identifying root causes and assessing whether variances are structural or one-time in nature. Enhanced monitoring of departmental spending and a review of budget assumptions are recommended to mitigate risks in upcoming quarters. Additionally, deeper engagement with department leaders will be critical to ensure alignment on cost management priorities.\n\n*AI-generated draft. Verify all figures against the table before use.*"
+    },
+    {
+      "id": "sql-finance-actuals",
+      "category": "sql",
+      "question": "What were total actuals for Finance in Q1 FY2025?",
+      "intent": "agent",
+      "mode": "SQL Agent",
+      "standalone_query": "What were total actuals for Finance in Q1 FY2025?",
+      "tools": [
+        "get_department_quarterly_summary"
+      ],
+      "checks": {
+        "routing": true,
+        "param:department": true,
+        "param:fiscal_year": true,
+        "param:quarter": true,
+        "behaviour:tools": true,
+        "behaviour:contains": true
+      },
+      "grounding": [
+        1,
+        1
+      ],
+      "unsupported_figures": [],
+      "faithfulness": 5,
+      "unsupported_claims": [],
+      "latency_s": 6.5,
+      "error": null,
+      "narrative": "Per the provided data, total actuals for Finance in Q1 FY2025 were **$934,095.77**."
+    },
+    {
+      "id": "sql-top-vendors",
+      "category": "sql",
+      "question": "Top 5 vendors by spend in Q1 FY2025",
+      "intent": "agent",
+      "mode": "SQL Agent",
+      "standalone_query": "Top 5 vendors by spend in Q1 FY2025",
+      "tools": [
+        "get_top_vendors"
+      ],
+      "checks": {
+        "routing": true,
+        "behaviour:tools": true,
+        "behaviour:contains": true
+      },
+      "grounding": [
+        5,
+        5
+      ],
+      "unsupported_figures": [],
+      "faithfulness": 5,
+      "unsupported_claims": [],
+      "latency_s": 6.6,
+      "error": null,
+      "narrative": "The top 5 vendors by spend in Q1 FY2025 are:\n\n1. **Aetna Health Insurance**: $9,124,594.29  \n2. **Indeed.com**: $9,021,645.58  \n3. **MetLife Insurance**: $8,649,629.53  \n4. **LinkedIn Talent Solutions**: $8,351,811.28  \n5. **ADP Payroll Services**: $8,288,082.64"
+    },
+    {
+      "id": "sql-ytd",
+      "category": "sql",
+      "question": "How is Software Engineering tracking for the full year FY2025?",
+      "intent": "agent",
+      "mode": "SQL Agent",
+      "standalone_query": "How is Software Engineering tracking for the full year FY2025?",
+      "tools": [
+        "get_ytd_summary"
+      ],
+      "checks": {
+        "routing": true,
+        "param:department": true,
+        "param:fiscal_year": true,
+        "behaviour:tools": true
+      },
+      "grounding": [
+        4,
+        4
+      ],
+      "unsupported_figures": [],
+      "faithfulness": 5,
+      "unsupported_claims": [],
+      "latency_s": 9.9,
+      "error": null,
+      "narrative": "Software Engineering is tracking slightly above budget for FY2025 year-to-date. \n\n- **YTD Budget**: $45,927,994.78  \n- **YTD Actuals**: $46,999,972.42  \n- **YTD Variance (Budget vs. Actuals)**: $1,071,977.64 (2.3% over budget)  \n\nNote that Q4 actuals are not yet available."
+    },
+    {
+      "id": "sql-compare",
+      "category": "sql",
+      "question": "Compare Marketing - APAC actuals in Q1 vs Q2 FY2025",
+      "intent": "agent",
+      "mode": "SQL Agent",
+      "standalone_query": "Compare Marketing - APAC actuals in Q1 FY2025 versus Q2 FY2025.",
+      "tools": [
+        "get_department_quarterly_summary",
+        "get_department_quarterly_summary"
+      ],
+      "checks": {
+        "routing": true,
+        "param:department": true,
+        "behaviour:tools": true
+      },
+      "grounding": [
+        3,
+        3
+      ],
+      "unsupported_figures": [],
+      "faithfulness": 5,
+      "unsupported_claims": [],
+      "latency_s": 9.2,
+      "error": null,
+      "narrative": "In Q1 FY2025, the actuals for Marketing - APAC totaled **$8,362,089.96**, while in Q2 FY2025, the actuals increased to **$9,739,429.30**. This represents a quarter-over-quarter increase of **$1,377,339.34** in actuals."
+    },
+    {
+      "id": "sql-future-forecast",
+      "category": "sql",
+      "question": "What's the forecast for Cybersecurity in Q3 FY2026?",
+      "intent": "agent",
+      "mode": "SQL Agent",
+      "standalone_query": "What's the forecast for Cybersecurity in Q3 FY2026?",
+      "tools": [
+        "get_department_quarterly_summary"
+      ],
+      "checks": {
+        "routing": true,
+        "param:department": true,
+        "param:fiscal_year": true,
+        "param:quarter": true
+      },
+      "grounding": [
+        1,
+        1
+      ],
+      "unsupported_figures": [],
+      "faithfulness": 5,
+      "unsupported_claims": [],
+      "latency_s": 7.5,
+      "error": null,
+      "narrative": "The forecast for Cybersecurity in Q3 FY2026 is **$1,964,538.05 USD**. \n\nPer the evidence, no actuals have been booked yet for this quarter."
+    },
+    {
+      "id": "sql-dept-vendors",
+      "category": "sql",
+      "question": "Which vendors did IT Infrastructure spend the most with in Q2 FY2025?",
+      "intent": "agent",
+      "mode": "SQL Agent",
+      "standalone_query": "Which vendors did IT Infrastructure spend the most with in Q2 FY2025?",
+      "tools": [
+        "get_top_vendors"
+      ],
+      "checks": {
+        "routing": true,
+        "param:department": true,
+        "behaviour:tools": true
+      },
+      "grounding": [
+        3,
+        3
+      ],
+      "unsupported_figures": [],
+      "faithfulness": 5,
+      "unsupported_claims": [],
+      "latency_s": 7.1,
+      "error": null,
+      "narrative": "In Q2 FY2025, IT Infrastructure spent the most with the following vendors:\n\n1. **Amazon Web Services**: $542,080.29  \n2. **Verizon Business**: $507,400.25  \n3. **Atlassian Corporation**: $503,707.53"
+    },
+    {
+      "id": "hyb-cyber-escalation",
+      "category": "hybrid",
+      "question": "Given our budget guidelines, does the Cybersecurity variance in Q1 FY2025 need escalation?",
+      "intent": "agent",
+      "mode": "Hybrid Agent (SQL + RAG)",
+      "standalone_query": "Given our budget guidelines, does the Cybersecurity variance in Q1 FY2025 need escalation?",
+      "tools": [
+        "get_department_quarterly_summary",
+        "search_documents"
+      ],
+      "checks": {
+        "routing": true,
+        "behaviour:tools": true,
+        "behaviour:tools_any": true
+      },
+      "grounding": [
+        2,
+        2
+      ],
+      "unsupported_figures": [],
+      "faithfulness": 5,
+      "unsupported_claims": [],
+      "latency_s": 9.6,
+      "error": null,
+      "narrative": "Yes, the Cybersecurity variance in Q1 FY2025 requires escalation. \n\nPer the \"Budget Planning & Forecasting Guidelines,\" any variance vs. budget exceeding 20% must be escalated to the VP Finance and briefed to the CFO. The Cybersecurity department's total variance vs. budget is +40.4%, which exceeds this threshold."
+    },
+    {
+      "id": "hyb-vendor-approval",
+      "category": "hybrid",
+      "question": "How much did Finance spend with its biggest vendor in Q2 FY2025, and what approval level would a purchase that size require?",
+      "intent": "agent",
+      "mode": "Hybrid Agent (SQL + RAG)",
+      "standalone_query": "How much did Finance spend with its biggest vendor in Q2 FY2025, and what approval level would a purchase that size require?",
+      "tools": [
+        "get_top_vendors",
+        "search_documents"
+      ],
+      "checks": {
+        "routing": true,
+        "behaviour:tools": true
+      },
+      "grounding": [
+        3,
+        3
+      ],
+      "unsupported_figures": [],
+      "faithfulness": 5,
+      "unsupported_claims": [],
+      "latency_s": 7.8,
+      "error": null,
+      "narrative": "In Q2 FY2025, Finance spent $198,467.38 with its biggest vendor, Indeed.com. Per the Software & Cloud Procurement Policy, a purchase of this size ($100,000\u2013$500,000) would require approval from the CTO and CFO."
+    },
+    {
+      "id": "hyb-legal-reforecast",
+      "category": "hybrid",
+      "question": "Is Legal's Q3 FY2025 overspend big enough to require a reforecast under our planning guidelines?",
+      "intent": "agent",
+      "mode": "Hybrid Agent (SQL + RAG)",
+      "standalone_query": "Is Legal's Q3 FY2025 overspend big enough to require a reforecast under our planning guidelines?",
+      "tools": [
+        "get_department_quarterly_summary",
+        "search_documents"
+      ],
+      "checks": {
+        "routing": true,
+        "behaviour:tools": true,
+        "behaviour:tools_any": true
+      },
+      "grounding": [
+        5,
+        5
+      ],
+      "unsupported_figures": [],
+      "faithfulness": 5,
+      "unsupported_claims": [],
+      "latency_s": 9.2,
+      "error": null,
+      "narrative": "Yes, Legal's Q3 FY2025 overspend requires a reforecast under the planning guidelines. \n\nPer Source 2 of the Budget Planning & Forecasting Guidelines, departments must reforecast if actual spend diverges from budget by more than 10% in any expense category. Legal's total variance vs. budget is +51.9%, and all individual expense categories exceed the 10% threshold, with variances ranging from +38.8% to +56.2%."
+    },
+    {
+      "id": "clar-marketing",
+      "category": "clarify",
+      "question": "Why did Marketing overspend in Q2 FY2025?",
+      "intent": "variance",
+      "mode": "Variance Explainer",
+      "standalone_query": "Why did Marketing overspend in Q2 FY2025?",
+      "tools": [],
+      "checks": {
+        "routing": true,
+        "behaviour:clarifies": true
+      },
+      "grounding": [
+        0,
+        0
+      ],
+      "unsupported_figures": [],
+      "faithfulness": null,
+      "unsupported_claims": [],
+      "latency_s": 2.4,
+      "error": "\"Marketing\" matches more than one department \u2014 did you mean one of: Marketing - APAC, Marketing - Americas, Marketing - EMEA?",
+      "narrative": null
+    },
+    {
+      "id": "clar-unknown-dept",
+      "category": "clarify",
+      "question": "Why did the Innovation department overspend in Q2 FY2025?",
+      "intent": "variance",
+      "mode": "Variance Explainer",
+      "standalone_query": "Why did the Innovation department overspend in Q2 FY2025?",
+      "tools": [],
+      "checks": {
+        "behaviour:clarifies": true
+      },
+      "grounding": [
+        0,
+        0
+      ],
+      "unsupported_figures": [],
+      "faithfulness": null,
+      "unsupported_claims": [],
+      "latency_s": 2.2,
+      "error": "\"Innovation\" is not a department in the planning data. Valid departments are: Customer Success - APAC, Customer Success - Americas, Customer Success - EMEA, Cybersecurity, Data & Analytics, Executive, Facilities & Real Estate, Field Operations - APAC, Field Operations - Americas, Field Operations - EMEA, Finance, Finance Operations, Human Resources, IT Infrastructure, Legal, Marketing - APAC, Marketing - Americas, Marketing - EMEA, Procurement, Product Management, Risk & Compliance, Sales - APAC, Sales - Americas, Sales - EMEA, Software Engineering, Supply Chain.",
+      "narrative": null
+    },
+    {
+      "id": "clar-future",
+      "category": "clarify",
+      "question": "Why did Finance overspend in Q3 FY2026?",
+      "intent": "variance",
+      "mode": "Variance Explainer",
+      "standalone_query": "Why did Finance overspend in Q3 FY2026?",
+      "tools": [],
+      "checks": {
+        "routing": true,
+        "behaviour:clarifies": true
+      },
+      "grounding": [
+        0,
+        0
+      ],
+      "unsupported_figures": [],
+      "faithfulness": null,
+      "unsupported_claims": [],
+      "latency_s": 2.2,
+      "error": "Q3 FY2026 has no actuals booked yet (budget and forecast only), so there is no variance to analyse. The latest quarter with actuals is Q1 FY2026.",
+      "narrative": null
+    },
+    {
+      "id": "mt-quarter",
+      "category": "multi_turn",
+      "question": "what about Q3?",
+      "intent": "variance",
+      "mode": "Variance Explainer",
+      "standalone_query": "Why did IT Infrastructure overspend in Q3 FY2025?",
+      "tools": [
+        "get_variance_breakdown"
+      ],
+      "checks": {
+        "routing": true,
+        "param:department": true,
+        "param:fiscal_year": true,
+        "param:quarter": true
+      },
+      "grounding": [
+        10,
+        10
+      ],
+      "unsupported_figures": [],
+      "faithfulness": 5,
+      "unsupported_claims": [],
+      "latency_s": 6.3,
+      "error": null,
+      "narrative": "The IT Infrastructure budget for Q3 FY2025 shows a total unfavorable variance of +$2,717,155 (+49.9%), with actuals of $8,159,782 against a budget of $5,442,626. Key drivers include Technology at +$1,246,866 (+51.1%), People Costs at +$993,836 (+52.0%), and Professional Services at +$289,476 (+44.4%). Further detail is required to confirm the specific causes of these overages."
+    },
+    {
+      "id": "mt-dept-filter",
+      "category": "multi_turn",
+      "question": "now just for Software Engineering",
+      "intent": "agent",
+      "mode": "SQL Agent",
+      "standalone_query": "Top 5 vendors by spend in Q1 FY2025 for Software Engineering",
+      "tools": [
+        "get_top_vendors"
+      ],
+      "checks": {
+        "routing": true,
+        "param:department": true,
+        "param:fiscal_year": true,
+        "param:quarter": true,
+        "behaviour:tools": true
+      },
+      "grounding": [
+        5,
+        5
+      ],
+      "unsupported_figures": [],
+      "faithfulness": 5,
+      "unsupported_claims": [],
+      "latency_s": 7.2,
+      "error": null,
+      "narrative": "The top 5 vendors by spend in Q1 FY2025 for Software Engineering are:\n\n1. Udemy Business: $2,119,024.12  \n2. Workday Inc: $2,009,079.17  \n3. Indeed.com: $1,912,412.62  \n4. Cornerstone OnDemand: $1,910,627.61  \n5. Aetna Health Insurance: $1,902,428.31"
+    },
+    {
+      "id": "mt-region",
+      "category": "multi_turn",
+      "question": "and for Europe?",
+      "intent": "rag",
+      "mode": "Document Q&A (RAG)",
+      "standalone_query": "What is the per diem rate for travel in Europe?",
+      "tools": [],
+      "checks": {
+        "routing": true,
+        "behaviour:contains": true
+      },
+      "grounding": [
+        1,
+        1
+      ],
+      "unsupported_figures": [],
+      "faithfulness": 5,
+      "unsupported_claims": [],
+      "latency_s": 5.8,
+      "error": null,
+      "narrative": "The per diem rate for travel in Europe (UK/Western Europe) is $95/day, as stated in the Travel & Entertainment Policy."
+    }
+  ]
+}

@@ -59,3 +59,59 @@ def test_search_endpoint(client):
     data = response.json()
     assert "query" in data
     assert "results" in data
+
+
+class _FakeGraph:
+    """Stands in for the compiled LangGraph: replays a fixed astream sequence."""
+
+    def __init__(self, final_state, extra_events=()):
+        self.final_state = final_state
+        self.extra_events = extra_events
+
+    async def astream(self, state, stream_mode=None, subgraphs=False):
+        from langchain_core.messages import AIMessageChunk
+        yield (), "custom", {"type": "mode", "mode": "Variance Explainer", "intent": "variance"}
+        yield ("variance:1",), "custom", {"type": "table", "content": "| a |\n|---|\n| 1 |"}
+        yield ("variance:1",), "messages", (AIMessageChunk(content="routing"), {"tags": []})
+        yield ("variance:1",), "messages", (AIMessageChunk(content="Over "), {"tags": ["final_answer"]})
+        yield ("variance:1",), "messages", (AIMessageChunk(content="budget."), {"tags": ["final_answer"]})
+        for ev in self.extra_events:
+            yield ev
+        yield (), "values", self.final_state
+
+    async def ainvoke(self, state):
+        return self.final_state
+
+
+def _sse_events(response):
+    import json
+    return [json.loads(line[6:]) for line in response.text.splitlines()
+            if line.startswith("data: ") and line != "data: [DONE]"]
+
+
+def test_chat_streams_mode_table_tokens_and_done(client):
+    import backend.main as main
+    main.agent_graph = _FakeGraph({"narrative": "Over budget.", "sql_query": "get_variance_breakdown({})"})
+    response = client.post("/chat", json={"question": "Why did IT overspend in Q2 FY2025?"})
+    assert response.status_code == 200
+    events = _sse_events(response)
+    types = [e["type"] for e in events]
+    assert types == ["mode", "table", "token", "token", "done"]
+    assert "".join(e["content"] for e in events if e["type"] == "token") == "Over budget."
+    assert events[-1]["sql_query"].startswith("get_variance_breakdown")
+    assert response.text.rstrip().endswith("data: [DONE]")
+
+
+def test_chat_surfaces_flow_errors(client):
+    import backend.main as main
+    main.agent_graph = _FakeGraph({"error": '"Sales" matches more than one department'})
+    events = _sse_events(client.post("/chat", json={"question": "Why did Sales overspend?"}))
+    assert {"type": "error", "message": '"Sales" matches more than one department'} in events
+
+
+def test_agent_endpoint_returns_json(client):
+    import backend.main as main
+    main.agent_graph = _FakeGraph({"mode_label": "SQL Agent", "intent": "agent",
+                                   "narrative": "Done.", "formatted_table": "| a |"})
+    data = client.post("/agent", json={"question": "Top vendors Q1 FY2025"}).json()
+    assert data["mode"] == "SQL Agent" and data["narrative"] == "Done." and data["error"] is None

@@ -1,235 +1,156 @@
 """
 FinSight AI — Commentary Drafter Flow
-LangGraph subgraph: pulls live numbers for a period, identifies the top
-narrative stories from the anomaly scan, then drafts CFO-level commentary.
+LangGraph subgraph: pulls live numbers for a period, picks the most important
+stories from the anomaly scan, then drafts CFO-level commentary.
 Output is always clearly labelled as DRAFT.
 
 Steps:
-  1. extract_params       — mini LLM extracts FY / quarter
-  2. run_anomaly_scan     — reuses anomaly scanner tool
-  3. identify_stories     — mini LLM selects top 3 narrative hooks
-  4. draft_commentary     — full LLM writes formal CFO commentary
+  1. validate_params   — require a period
+  2. run_anomaly_scan  — reuses the anomaly tool at a lower (5%) threshold
+  3. identify_stories  — mini model picks the top 3 departments (structured output)
+  4. draft_commentary  — full model writes formal CFO commentary (streamed)
 """
 
 import json
 import logging
-import os
-from langgraph.graph import StateGraph, END
-from langchain_openai import AzureChatOpenAI
-from langchain_core.messages import HumanMessage, SystemMessage
 
+from langchain_core.messages import HumanMessage, SystemMessage
+from langgraph.config import get_stream_writer
+from langgraph.graph import END, StateGraph
+from pydantic import BaseModel, Field
+
+from backend.graph.catalog import resolve_department
+from backend.graph.llm import final_llm, mini_llm
 from backend.graph.state import AgentState
-from backend.graph.tools import get_anomalies, get_department_quarterly_summary
+from backend.graph.tools import get_anomalies, run_tool
 
 logger = logging.getLogger(__name__)
 
-
-def _mini_llm():
-    return AzureChatOpenAI(
-        azure_endpoint=os.getenv("AZURE_OPENAI_ENDPOINT", "PLACEHOLDER"),
-        azure_deployment=os.getenv("AZURE_OPENAI_MINI_DEPLOYMENT", "gpt-5-4-mini"),
-        api_key=os.getenv("AZURE_OPENAI_API_KEY", "PLACEHOLDER"),
-        api_version=os.getenv("AZURE_OPENAI_API_VERSION", "2024-12-01-preview"),
-        temperature=0,
-    )
+COMMENTARY_THRESHOLD_PCT = 5.0
+COMMENTARY_MIN_AMOUNT = 5000.0
+DRAFT_HEADER = "**⚠️ DRAFT — review and edit before distributing**\n\n"
+DRAFT_FOOTER = "\n\n*AI-generated draft. Verify all figures against the table before use.*"
 
 
-def _full_llm():
-    return AzureChatOpenAI(
-        azure_endpoint=os.getenv("AZURE_OPENAI_ENDPOINT", "PLACEHOLDER"),
-        azure_deployment=os.getenv("AZURE_OPENAI_FULL_DEPLOYMENT", "gpt-4o"),
-        api_key=os.getenv("AZURE_OPENAI_API_KEY", "PLACEHOLDER"),
-        api_version=os.getenv("AZURE_OPENAI_API_VERSION", "2024-12-01-preview"),
-        temperature=0.4,
-    )
+class Stories(BaseModel):
+    departments: list[str] = Field(description="Exactly 3 department names, most important first.")
 
 
-# ─────────────────────────────────────────────────────────────────────────────
-# Node 1 — Extract period
-# ─────────────────────────────────────────────────────────────────────────────
-
-def extract_params(state: AgentState) -> AgentState:
-    if state.get("fiscal_year") and state.get("quarter"):
-        return state
-
-    prompt = f"""Extract fiscal_year (4-digit string) and quarter (Q1/Q2/Q3/Q4) from this query.
-Return JSON only. Query: {state["query"]}
-Example: {{"fiscal_year": "2025", "quarter": "Q3"}}"""
-
-    try:
-        response = _mini_llm().invoke([HumanMessage(content=prompt)])
-        parsed = json.loads(response.content.strip().strip("```json").strip("```"))
-        return {
-            **state,
-            "fiscal_year": parsed.get("fiscal_year") or state.get("fiscal_year"),
-            "quarter": parsed.get("quarter") or state.get("quarter"),
-        }
-    except Exception as e:
-        return {**state, "error": f"Could not extract period from query: {e}"}
+def validate_params(state: AgentState) -> dict:
+    if not (state.get("fiscal_year") and state.get("quarter")):
+        return {"error": "Which period should the commentary cover? Please give a quarter and "
+                         "fiscal year, e.g. \"Draft the CFO commentary for Q2 FY2025\"."}
+    return {}
 
 
-# ─────────────────────────────────────────────────────────────────────────────
-# Node 2 — Run anomaly scan to surface key stories
-# ─────────────────────────────────────────────────────────────────────────────
-
-def run_anomaly_scan(state: AgentState) -> AgentState:
+def run_anomaly_scan(state: AgentState) -> dict:
     if state.get("error"):
-        return state
-
-    fy = state.get("fiscal_year")
-    q = state.get("quarter")
-
-    if not all([fy, q]):
-        return {**state, "error": "Fiscal year and quarter are required for commentary drafting."}
-
-    result = get_anomalies.invoke({
-        "fiscal_year": fy,
-        "quarter": q,
-        "threshold_pct": 5.0,   # Lower threshold for commentary — catch more stories
-        "min_amount": 5000.0,
-    })
-
+        return {}
+    args = {"fiscal_year": state["fiscal_year"], "quarter": state["quarter"],
+            "threshold_pct": COMMENTARY_THRESHOLD_PCT, "min_amount": COMMENTARY_MIN_AMOUNT}
+    result = run_tool(get_anomalies, args)
     if "error" in result:
-        return {**state, "error": result["error"]}
+        return {"error": result["error"]}
+    return {"tool_results": result, "sql_query": f"get_anomalies({json.dumps(args)})"}
 
-    return {**state, "tool_results": result}
 
-
-# ─────────────────────────────────────────────────────────────────────────────
-# Node 3 — Identify top narrative stories
-# ─────────────────────────────────────────────────────────────────────────────
-
-def identify_stories(state: AgentState) -> AgentState:
+def identify_stories(state: AgentState) -> dict:
     if state.get("error"):
-        return state
+        return {}
+    r = state["tool_results"]
+    anomalies = r["anomalies"]
+    by_size = sorted(anomalies, key=lambda a: abs(a["Variance_BvA"]), reverse=True)
+    fallback = [a["Department"] for a in by_size[:3]]
+    if len(anomalies) <= 3:
+        return {"tool_results": {**r, "stories": fallback}}
 
-    anomalies = state["tool_results"].get("anomalies", [])
-    fy = state["fiscal_year"]
-    q = state["quarter"]
-
-    if not anomalies:
-        state["tool_results"]["stories"] = []
-        return state
-
-    anomaly_text = "\n".join(
+    listing = "\n".join(
         f"- {a['Department']}: ${a['Variance_BvA']:+,.0f} ({a['Variance_BvA_Pct']:+.1f}%)"
-        for a in anomalies[:8]
+        for a in by_size[:10]
     )
-
-    prompt = f"""You are an FP&A analyst preparing CFO commentary for {q} FY{fy}.
-These departments have notable budget variances:
-
-{anomaly_text}
-
-Select the top 3 stories that matter most for CFO-level commentary.
-Consider: magnitude of variance, direction (over/under), and mix of departments.
-Return a JSON list of department names only.
-Example: ["Software Engineering", "Sales - Americas", "IT Infrastructure"]"""
-
     try:
-        response = _mini_llm().invoke([HumanMessage(content=prompt)])
-        content = response.content.strip().strip("```json").strip("```")
-        stories = json.loads(content)
-        state["tool_results"]["stories"] = stories
+        picked = mini_llm().with_structured_output(Stories).invoke(
+            f"Pick the 3 departments that matter most for CFO commentary on "
+            f"{r['quarter']} FY{r['fiscal_year']}, weighing dollar magnitude, direction "
+            f"(over vs under budget) and a mix of functions:\n{listing}"
+        )
+        flagged = {a["Department"] for a in anomalies}
+        stories = []
+        for name in picked.departments:
+            res = resolve_department(name)
+            if res.ok and res.department in flagged and res.department not in stories:
+                stories.append(res.department)
+        stories = (stories + [d for d in fallback if d not in stories])[:3]
     except Exception as e:
-        logger.warning(f"identify_stories failed: {e} — using top 3 by variance")
-        state["tool_results"]["stories"] = [
-            a["Department"] for a in anomalies[:3]
-        ]
-
-    return state
+        logger.warning(f"identify_stories failed, using largest variances: {e}")
+        stories = fallback
+    return {"tool_results": {**r, "stories": stories}}
 
 
-# ─────────────────────────────────────────────────────────────────────────────
-# Node 4 — Draft CFO commentary
-# ─────────────────────────────────────────────────────────────────────────────
-
-def draft_commentary(state: AgentState) -> AgentState:
+def draft_commentary(state: AgentState) -> dict:
     if state.get("error"):
-        return state
+        return {}
+    r = state["tool_results"]
+    total = r["company_total"]
+    featured = [a for a in r["anomalies"] if a["Department"] in r.get("stories", [])]
+    writer = get_stream_writer()
 
-    stories = state["tool_results"].get("stories", [])
-    anomalies = state["tool_results"].get("anomalies", [])
-    fy = state["fiscal_year"]
-    q = state["quarter"]
+    if featured:
+        table = "\n".join(
+            ["| Department | Budget ($) | Actuals ($) | Variance ($) | Variance % |",
+             "|---|---|---|---|---|"]
+            + [f"| {a['Department']} | {a['Budget_USD']:,.0f} | {a['Actuals_USD']:,.0f} "
+               f"| {a['Variance_BvA']:+,.0f} | {a['Variance_BvA_Pct']:+.1f}% |" for a in featured]
+            + [f"| **All departments** | {total['Budget_USD']:,.0f} | {total['Actuals_USD']:,.0f} "
+               f"| {total['Variance_BvA']:+,.0f} | {total['Variance_BvA_Pct']:+.1f}% |"]
+        )
+        writer({"type": "table", "content": table})
+    else:
+        table = None
 
-    # Pull summary data for each featured department
-    dept_summaries = []
-    for dept in stories:
-        result = get_department_quarterly_summary.invoke({
-            "department": dept,
-            "fiscal_year": fy,
-            "quarter": q,
-        })
-        if "error" not in result:
-            total = next(
-                (r for r in result.get("rows", []) if r.get("Expense_Category") == "TOTAL"),
-                None,
-            )
-            if total:
-                dept_summaries.append(
-                    f"- {dept}: Budget ${total['Budget_USD']:,.0f} | "
-                    f"Actuals ${total['Actuals_USD']:,.0f} | "
-                    f"Variance ${total['Variance_BvA']:+,.0f} ({total['Variance_BvA_Pct']:+.1f}%)"
-                )
+    context = "\n".join(
+        f"- {a['Department']}: budget ${a['Budget_USD']:,.0f}, actuals ${a['Actuals_USD']:,.0f}, "
+        f"variance ${a['Variance_BvA']:+,.0f} ({a['Variance_BvA_Pct']:+.1f}%)"
+        for a in featured
+    ) or "- No department exceeded the 5% variance threshold."
 
-    context = "\n".join(dept_summaries) if dept_summaries else "Data not available for featured departments."
+    prompt = f"""Draft CFO-level management commentary on operating expenses for {r['quarter']} FY{r['fiscal_year']}.
 
-    total_depts = state["tool_results"].get("total_departments_scanned", "N/A")
-    flagged = state["tool_results"].get("flagged_count", 0)
-
-    prompt = f"""Draft CFO-level management commentary for {q} FY{fy}.
-
-Key department performance (actuals vs budget):
+Company total (all {r['total_departments_scanned']} departments): budget ${total['Budget_USD']:,.0f}, actuals ${total['Actuals_USD']:,.0f}, variance ${total['Variance_BvA']:+,.0f} ({total['Variance_BvA_Pct']:+.1f}%).
+{r['flagged_count']} of {r['total_departments_scanned']} departments were more than {COMMENTARY_THRESHOLD_PCT:g}% off budget.
+Featured departments:
 {context}
 
-Overall: {flagged} of {total_depts} departments had notable variances this quarter.
-
 Instructions:
-- Write 3–4 paragraphs in formal FP&A register
-- Opening paragraph: overall quarter summary (favourable or unfavourable, why)
-- One paragraph per featured department: cite specific figures
-- Closing paragraph: outlook and watch items
-- Factual, concise — no filler phrases, no invented information
-- Use dollar amounts and percentages exactly as given above"""
+- 3–4 short paragraphs in formal FP&A register.
+- Opening: overall quarter result, favourable or unfavourable.
+- One paragraph covering the featured departments, citing figures exactly as given.
+- Closing: watch items and suggested follow-ups. Do not invent causes or forward-looking numbers.
+- No headings, no filler."""
 
+    writer({"type": "token", "content": DRAFT_HEADER})
     try:
-        response = _full_llm().invoke([
-            SystemMessage(content=(
-                "You are a senior FP&A analyst drafting CFO management commentary. "
-                "Be precise, cite figures, and write in formal finance register."
-            )),
+        resp = final_llm(0.4).invoke([
+            SystemMessage(content="You are a senior FP&A analyst drafting CFO management commentary."),
             HumanMessage(content=prompt),
         ])
-        draft = (
-            "⚠️ DRAFT — Review and edit before distributing\n"
-            "─────────────────────────────────────────────\n\n"
-            + response.content.strip()
-            + "\n\n─────────────────────────────────────────────\n"
-            "⚠️ This is an AI-generated draft. Verify all figures before use."
-        )
-        return {**state, "narrative": draft}
     except Exception as e:
         logger.error(f"draft_commentary failed: {e}")
-        return {**state, "error": f"Commentary generation failed: {e}"}
+        return {"formatted_table": table, "error": "Commentary generation failed — please retry."}
+    writer({"type": "token", "content": DRAFT_FOOTER})
+    return {"formatted_table": table,
+            "narrative": DRAFT_HEADER + resp.content.strip() + DRAFT_FOOTER}
 
-
-# ─────────────────────────────────────────────────────────────────────────────
-# Graph assembly
-# ─────────────────────────────────────────────────────────────────────────────
 
 def build_commentary_graph():
     graph = StateGraph(AgentState)
-
-    graph.add_node("extract_params", extract_params)
+    graph.add_node("validate_params", validate_params)
     graph.add_node("run_anomaly_scan", run_anomaly_scan)
     graph.add_node("identify_stories", identify_stories)
     graph.add_node("draft_commentary", draft_commentary)
-
-    graph.set_entry_point("extract_params")
-    graph.add_edge("extract_params", "run_anomaly_scan")
+    graph.set_entry_point("validate_params")
+    graph.add_edge("validate_params", "run_anomaly_scan")
     graph.add_edge("run_anomaly_scan", "identify_stories")
     graph.add_edge("identify_stories", "draft_commentary")
     graph.add_edge("draft_commentary", END)
-
     return graph.compile()

@@ -36,6 +36,8 @@ VENDOR PROFILES:
 
 Guidelines:
 - Always ground your answers in the retrieved documents. Do not invent numbers.
+- State only what the documents say. Do not add your own characterisations ("strong",
+  "critical", "key"), conclusions or summary sentences that the documents don't support.
 - Cite the source document naturally in your answer (e.g., "According to the Q2 FY2026
   Software Engineering review..." or "Per the Travel & Entertainment Policy...").
 - For budget vs actuals questions, reference the specific department memo.
@@ -101,9 +103,12 @@ class RAGPipeline:
 
         messages = [{"role": "system", "content": SYSTEM_PROMPT}]
 
-        # Add conversation history
+        # History arrives as ConversationTurn models (/chat) or plain dicts (graph state)
         for turn in recent_history:
-            messages.append({"role": turn.role, "content": turn.content})
+            if isinstance(turn, dict):
+                messages.append({"role": turn["role"], "content": turn["content"]})
+            else:
+                messages.append({"role": turn.role, "content": turn.content})
 
         # Add context + current question
         user_message = (
