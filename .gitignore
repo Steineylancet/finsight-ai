@@ -12,9 +12,21 @@ env/
 dist/
 build/
 
-# Data (large files)
+# Data (large files) — served from Azure Blob Storage in production,
+# DataLoader falls back to downloading these if missing locally
 data/raw/
 data/processed/
+gl_data/
+master_data/
+planning_data/
+
+# Claude Code local session state
+.claude/
+
+# Local scratch / logs
+app_fix.zip
+ingest_log.txt
+my_notes_qa.txt
 
 # IDE
 .vscode/

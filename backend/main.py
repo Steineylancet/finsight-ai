@@ -16,6 +16,8 @@ from slowapi.errors import RateLimitExceeded
 
 from backend.models import ChatRequest, ChatResponse, SearchRequest, HealthResponse, Source
 from backend.rag_pipeline import RAGPipeline
+from backend.data_loader import DataLoader
+from backend.graph.router import build_agent_graph
 
 # ── Logging ──────────────────────────────────────────────────────────────────
 logging.basicConfig(
@@ -51,13 +53,18 @@ app.mount("/static", StaticFiles(directory=_static_dir), name="static")
 
 # ── Startup ───────────────────────────────────────────────────────────────────
 rag_pipeline: RAGPipeline = None
+agent_graph = None
 
 @app.on_event("startup")
 async def startup_event():
-    global rag_pipeline
+    global rag_pipeline, agent_graph
     logger.info("Initializing RAG pipeline...")
     rag_pipeline = RAGPipeline()
-    logger.info("FinSight AI is ready.")
+    logger.info("Loading financial data CSVs for agentic layer...")
+    DataLoader.get()  # Warm up singleton — loads once, reused by all tools
+    logger.info("Compiling LangGraph agent...")
+    agent_graph = build_agent_graph()
+    logger.info("FinSight AI v3 is ready.")
 
 
 # ── Endpoints ─────────────────────────────────────────────────────────────────
@@ -119,6 +126,61 @@ async def chat(request: Request, body: ChatRequest):
     except Exception as e:
         logger.error(f"Chat endpoint error: {e}", exc_info=True)
         raise HTTPException(status_code=500, detail=f"Internal error: {str(e)}")
+
+
+@app.post("/agent")
+@limiter.limit("10/minute")
+async def agent(request: Request, body: ChatRequest):
+    """
+    Agentic endpoint (v3). Classifies query intent and routes to:
+      - RAG pipeline (policy / document questions)
+      - SQL agent via LangChain tools + pandas DataFrames
+      - LangGraph analytical flows: variance_explainer, anomaly_scanner, commentary_drafter
+    Returns structured JSON (not streaming) with mode_label, table, narrative, sources.
+    """
+    try:
+        initial_state = {
+            "query": body.question,
+            "conversation_history": [t.model_dump() for t in body.conversation_history],
+            "intent": "",
+            "mode_label": "",
+            "department": None,
+            "fiscal_year": None,
+            "quarter": None,
+            "threshold_pct": None,
+            "min_amount": None,
+            "formatted_table": None,
+            "narrative": None,
+            "sources": [],
+            "sql_query": None,
+            "tool_results": None,
+            "error": None,
+        }
+
+        result = agent_graph.invoke(initial_state)
+
+        if result.get("error"):
+            return {
+                "mode": result.get("mode_label", "Error"),
+                "error": result["error"],
+                "table": None,
+                "narrative": None,
+                "sources": [],
+                "sql_query": None,
+            }
+
+        return {
+            "mode": result.get("mode_label", "SQL Query"),
+            "table": result.get("formatted_table"),
+            "narrative": result.get("narrative"),
+            "sources": result.get("sources", []),
+            "sql_query": result.get("sql_query"),
+            "error": None,
+        }
+
+    except Exception as e:
+        logger.error(f"Agent endpoint error: {e}", exc_info=True)
+        raise HTTPException(status_code=500, detail=f"Agent error: {str(e)}")
 
 
 @app.get("/search")

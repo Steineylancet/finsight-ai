@@ -28,9 +28,11 @@ jobs:
         env:
           AZURE_OPENAI_ENDPOINT: https://dummy.openai.azure.com/
           AZURE_OPENAI_API_KEY: dummy-key
-          AZURE_OPENAI_API_VERSION: 2024-02-01
+          AZURE_OPENAI_API_VERSION: 2024-12-01-preview
           AZURE_OPENAI_CHAT_DEPLOYMENT: gpt-4o
           AZURE_OPENAI_EMBEDDING_DEPLOYMENT: text-embedding-ada-002
+          AZURE_OPENAI_MINI_DEPLOYMENT: gpt-5.4-mini
+          AZURE_OPENAI_FULL_DEPLOYMENT: gpt-4o
           AZURE_SEARCH_ENDPOINT: https://dummy.search.windows.net
           AZURE_SEARCH_API_KEY: dummy-key
           AZURE_SEARCH_INDEX_NAME: finsight-index
@@ -61,9 +63,11 @@ jobs:
               SCM_DO_BUILD_DURING_DEPLOYMENT="true" \
               AZURE_OPENAI_ENDPOINT="${{ secrets.AZURE_OPENAI_ENDPOINT }}" \
               AZURE_OPENAI_API_KEY="${{ secrets.AZURE_OPENAI_API_KEY }}" \
-              AZURE_OPENAI_API_VERSION="2024-02-01" \
+              AZURE_OPENAI_API_VERSION="2024-12-01-preview" \
               AZURE_OPENAI_CHAT_DEPLOYMENT="gpt-4o" \
               AZURE_OPENAI_EMBEDDING_DEPLOYMENT="text-embedding-ada-002" \
+              AZURE_OPENAI_MINI_DEPLOYMENT="gpt-5.4-mini" \
+              AZURE_OPENAI_FULL_DEPLOYMENT="gpt-4o" \
               AZURE_SEARCH_ENDPOINT="${{ secrets.AZURE_SEARCH_ENDPOINT }}" \
               AZURE_SEARCH_API_KEY="${{ secrets.AZURE_SEARCH_API_KEY }}" \
               AZURE_SEARCH_INDEX_NAME="finsight-index" \
