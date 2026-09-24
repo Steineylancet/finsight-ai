@@ -36,7 +36,10 @@ jobs:
           AZURE_SEARCH_ENDPOINT: https://dummy.search.windows.net
           AZURE_SEARCH_API_KEY: dummy-key
           AZURE_SEARCH_INDEX_NAME: finsight-index
-          AZURE_STORAGE_CONNECTION_STRING: DefaultEndpointsProtocol=https;dummy
+          # Real credential (not dummy) — DataLoader downloads the planning/GL
+          # CSVs from Blob Storage at app startup since they're gitignored
+          # (100MB+, not checked out in CI), so this needs to actually resolve.
+          AZURE_STORAGE_CONNECTION_STRING: ${{ secrets.AZURE_STORAGE_CONNECTION_STRING }}
           AZURE_STORAGE_CONTAINER_NAME: financial-data
 
   deploy:
