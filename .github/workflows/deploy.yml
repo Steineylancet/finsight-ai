@@ -79,6 +79,7 @@ jobs:
               LANGSMITH_TRACING="${{ secrets.LANGSMITH_API_KEY != '' }}" \
               LANGSMITH_API_KEY="${{ secrets.LANGSMITH_API_KEY }}" \
               LANGSMITH_PROJECT="finsight" \
+              BUILD_SHA="${{ github.sha }}" \
             --output none
 
       - name: Zip app for deployment
@@ -94,11 +95,24 @@ jobs:
             -x "ingest_log.txt" \
             -x "setup_azure.ps1"
 
+      # The F1 tier can take >10 min to install dependencies and boot, which
+      # outlasts the CLI's status tracking. Tracking timing out is not a failed
+      # deploy — the next step is the real gate.
       - name: Deploy ZIP to Azure
         run: |
           az webapp deployment source config-zip \
             --name finsight-ai-app \
             --resource-group finsight-ai-rg \
             --src app.zip \
-            --timeout 600 \
-            --output none
+            --timeout 900 \
+            --output none \
+          || echo "::warning::Deployment status tracking did not confirm success; verifying via /health"
+
+      - name: Verify new commit is serving
+        run: |
+          for i in $(seq 1 60); do
+            served=$(curl -s -m 20 https://finsight-ai-app.azurewebsites.net/health | python3 -c "import sys,json; print(json.load(sys.stdin).get('commit',''))" 2>/dev/null || true)
+            if [ "$served" = "${{ github.sha }}" ]; then echo "Live and serving ${{ github.sha }}"; exit 0; fi
+            echo "Attempt $i: serving '${served:-unreachable}', waiting..."; sleep 20
+          done
+          echo "::error::Site did not start serving ${{ github.sha }} within 20 minutes"; exit 1

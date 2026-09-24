@@ -42,3 +42,4 @@ class HealthResponse(BaseModel):
     status: str
     service: str
     version: str
+    commit: str = "local"
